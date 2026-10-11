@@ -132,7 +132,7 @@ jobs:
 
       # Выражения берутся из Grafana rules.yml; фикстуры проверяют их смысл
       # и выдержку for, включая нулевое место и исключение диагностики.
-      - name: Поведение тревог рендера
+      - name: Поведение тревог рендера, доставки и копий
         run: |
           python3 ci/render-alert-tests.py --output "$RUNNER_TEMP/render-alerts"
           docker run --rm --entrypoint promtool \

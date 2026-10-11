@@ -2,6 +2,163 @@
 # Gauges come from render_history windows, not increments of the jobs queue.
 evaluation_interval: 1m
 tests:
+  - name: Night delivery backlog is not a stalled worker
+    interval: 1m
+    input_series:
+      - series: 'cs2_worker_last_success_timestamp_seconds{worker="доставка"}'
+        values: '1+0x420'
+      - series: 'cs2_worker_backlog{worker="доставка"}'
+        values: '3+0x420'
+      - series: 'cs2_worker_enabled{worker="доставка"}'
+        values: '1+0x420'
+      - series: 'cs2_chain_waiting_seconds{stage="разобран"}'
+        values: '0+0x420'
+    promql_expr_test:
+      - rule_uid: cs2-worker-silent
+        eval_time: 7h
+        exp_samples: []
+      - rule_uid: cs2-chain-waiting
+        eval_time: 7h
+        exp_samples: []
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: cs2-worker-silent
+        exp_alerts: []
+
+  - name: A stalled code worker still alerts
+    interval: 1m
+    input_series:
+      - series: 'cs2_worker_last_success_timestamp_seconds{worker="коды"}'
+        values: '1+0x420'
+      - series: 'cs2_worker_backlog{worker="коды"}'
+        values: '5+0x420'
+      - series: 'cs2_worker_enabled{worker="коды"}'
+        values: '1+0x420'
+    promql_expr_test:
+      - rule_uid: cs2-worker-silent
+        eval_time: 7h
+        exp_samples:
+          - labels: '{worker="коды"}'
+            value: 25199
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: cs2-worker-silent
+        exp_alerts:
+          - exp_labels: {worker: коды, severity: warning, area: cs2}
+
+  - name: Overdue delivery still alerts after the hold period
+    interval: 1m
+    input_series:
+      - series: 'cs2_chain_waiting_seconds{stage="разобран"}'
+        values: '0+0x59 7500+0x35'
+    promql_expr_test:
+      - rule_uid: cs2-chain-waiting
+        eval_time: 60m
+        exp_samples:
+          - labels: '{}'
+            value: 7500
+    alert_rule_test:
+      - eval_time: 89m
+        alertname: cs2-chain-waiting
+        exp_alerts: []
+      - eval_time: 90m
+        alertname: cs2-chain-waiting
+        exp_alerts:
+          - exp_labels: {severity: warning, area: cs2}
+
+  - name: A healthy collection cycle must not hide stale profile data
+    interval: 1m
+    input_series:
+      - series: cs2_steam_profiles_stale
+        values: '241+0x360'
+      - series: 'cs2_worker_last_success_timestamp_seconds{worker="профили"}'
+        values: '0+60x360'
+    promql_expr_test:
+      - rule_uid: cs2-profiles-stale
+        eval_time: 6h
+        exp_samples:
+          - labels: cs2_steam_profiles_stale
+            value: 241
+    alert_rule_test:
+      - eval_time: 6h
+        alertname: cs2-profiles-stale
+        exp_alerts:
+          - exp_labels: {severity: warning, area: cs2}
+
+  - name: Missing backup mark has its own alert and no fictional age
+    interval: 1m
+    input_series:
+      - series: 'up{job="node-host"}'
+        values: '1+0x35'
+    promql_expr_test:
+      - rule_uid: hw-laptop-backup-old
+        eval_time: 31m
+        exp_samples: []
+      - rule_uid: hw-laptop-backup-missing
+        eval_time: 31m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+    alert_rule_test:
+      - eval_time: 29m
+        alertname: hw-laptop-backup-missing
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: hw-laptop-backup-missing
+        exp_alerts:
+          - exp_labels: {severity: warning, area: server}
+
+  - name: Zero backup timestamp is unknown rather than old
+    interval: 1m
+    input_series:
+      - series: 'up{job="node-host"}'
+        values: '1+0x35'
+      - series: backup_laptop_last_success_timestamp_seconds
+        values: '0+0x35'
+    promql_expr_test:
+      - rule_uid: hw-laptop-backup-old
+        eval_time: 31m
+        exp_samples: []
+      - rule_uid: hw-laptop-backup-missing
+        eval_time: 31m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: Exporter outage must not invent a missing backup
+    interval: 1m
+    input_series:
+      - series: 'up{job="node-host"}'
+        values: '0+0x35'
+    promql_expr_test:
+      - rule_uid: hw-laptop-backup-missing
+        eval_time: 31m
+        exp_samples: []
+
+  - name: Old external backup alerts even with a fresh server dump
+    interval: 1m
+    input_series:
+      - series: backup_laptop_last_success_timestamp_seconds
+        values: '3600+0x2400'
+      - series: cs2_pg_dump_age_seconds
+        values: '300+0x2400'
+      - series: 'up{job="node-host"}'
+        values: '1+0x2400'
+    promql_expr_test:
+      - rule_uid: hw-laptop-backup-old
+        eval_time: 40h
+        exp_samples:
+          - labels: '{}'
+            value: 140400
+      - rule_uid: hw-laptop-backup-missing
+        eval_time: 40h
+        exp_samples: []
+    alert_rule_test:
+      - eval_time: 40h
+        alertname: hw-laptop-backup-old
+        exp_alerts:
+          - exp_labels: {severity: warning, area: server}
+
   - name: Diagnostic failures must not page for user or system orders
     interval: 1m
     input_series:

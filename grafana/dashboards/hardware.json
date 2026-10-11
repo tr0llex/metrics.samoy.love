@@ -9,7 +9,7 @@
   "timezone": "browser",
   "editable": false,
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "time": {
     "from": "now-24h",
@@ -4671,7 +4671,7 @@
       "description": "Сколько прошло с самого свежего снимка sanoid по каждому датасету из /etc/sanoid/sanoid.conf. Снимки суточные, в полночь UTC, поэтому норма — до 24 часов. Больше 28 часов — прогон sanoid этот датасет пропустил, и точки отката за сегодня нет. Пишет node-textfile-collect на хосте.\n\nТревоги по этой панели: «Сервер: снимки ZFS не делались больше суток» (предупреждение: старше 28 ч, держится 30 мин).",
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 180
       },
@@ -4734,18 +4734,18 @@
     {
       "type": "stat",
       "title": "Копия на ноутбук",
-      "description": "Сколько прошло с последней удачной копии незаменимого на ноутбук владельца. Копию делает Windows-машина владельца скриптом home-server scripts/backup-irreplaceable.sh и в конце пишет отметку в backup_laptop.prom на хосте. Прогон ночной: до суток — норма.\n\nТревоги по этой панели: «Сервер: копия на ноутбук старше 36 часов» (предупреждение: старше 36 ч, держится 30 мин).",
+      "description": "Возраст внешней копии незаменимых данных на ноутбуке. Серверный дамп и снимки ZFS на том же пуле её не заменяют. Старше 36 часов — проверить журнал и расписание копирования на принимающей машине. Нет положительной отметки — отдельная тревога: возраст неизвестен.",
       "id": 86,
       "gridPos": {
         "h": 8,
         "w": 4,
-        "x": 12,
+        "x": 8,
         "y": 180
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "time() - max(backup_laptop_last_success_timestamp_seconds)",
+          "expr": "time() - max(backup_laptop_last_success_timestamp_seconds > 0)",
           "instant": true
         }
       ],
@@ -4790,6 +4790,63 @@
       "datasource": {
         "type": "prometheus",
         "uid": "samoylove-prometheus"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Дамп Postgres на сервере",
+      "id": 89,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 180,
+        "w": 4,
+        "h": 8
+      },
+      "description": "Сколько прошло с последнего удачного дампа Postgres (cs2-pgdump пишет отметку в service_marks). Дамп ежедневный: больше 26 часов — вчерашний не удался, и тревога будит. «Дампа не было ни разу» — ряда нет вовсе: резервной копии учёток, кодов и заказов нет совсем, об этом отдельная тревога через двое суток.\n\nТревоги по этой панели: «Пристрелка: дамп Postgres давно не снимался» (предупреждение: дольше 26 ч, держится 30 мин); «Пристрелка: отметки дампа Postgres нет» (предупреждение: держится 2 сут). Этот дамп находится на серверном пуле: его свежесть не подтверждает наличие внешней копии. Возраст копии на ноутбуке показан отдельно.",
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(cs2_pg_dump_age_seconds)",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "noValue": "нет данных",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 93600
+              }
+            ]
+          }
+        },
+        "overrides": []
       }
     },
     {

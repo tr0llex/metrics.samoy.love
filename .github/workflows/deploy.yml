@@ -142,6 +142,11 @@ jobs:
         docker load -i "/cache/docker-images/prom_prometheus_$PROM.tar" >/dev/null 2>&1 || true; } &&
         docker run --rm --entrypoint promtool -v "$RUNNER_TEMP/pt:/etc/prometheus:ro"
         prom/prometheus:$PROM check config /etc/prometheus/prometheus.yml &&
+        python3 ci/alerts.py &&
+        python3 ci/render-alert-tests.py --output "$RUNNER_TEMP/alert-tests" &&
+        docker run --rm --entrypoint promtool
+        -v "$RUNNER_TEMP/alert-tests:/tests:ro" -w /tests
+        prom/prometheus:$PROM test rules render-alert-tests.yml &&
         DSUID=$(sed -n 's/^ *uid: *//p' grafana/provisioning/datasources/prometheus.yml) &&
         test -n "$DSUID" &&
         for f in grafana/dashboards/*.json; do

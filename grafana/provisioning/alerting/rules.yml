@@ -1206,7 +1206,7 @@ groups:
             datasourceUid: samoylove-prometheus
             relativeTimeRange: { from: 1800, to: 0 }
             model:
-              expr: '((time() - max(backup_laptop_last_success_timestamp_seconds)) > 36*3600) or ((absent(backup_laptop_last_success_timestamp_seconds) * 1e9) and on() (vector(time()) > 1790942400))'
+              expr: '(time() - max(backup_laptop_last_success_timestamp_seconds > 0)) > 36*3600'
               instant: true
               refId: A
           - refId: C
@@ -1225,7 +1225,54 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Последняя удачная копия на ноутбук старше 36 часов", description: "Копия незаменимого уезжает с сервера на ноутбук владельца каждую ночь, и удачный прогон пишет отметку в backup_laptop.prom на хосте. Отметка старая: ноутбук был выключен или скрипт упал. Смотреть last-run.log копии на ноутбуке и запустить scripts/backup-irreplaceable.sh руками. Значение около 30 лет значит, что отметки нет совсем: скрипт ни разу не дошёл до конца или файл на хосте удалён.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "старше 36 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-laptop-backup-old", __dashboardUid__: "samoylove-hardware", __panelId__: "86" }
+        annotations: { summary: "Последняя удачная копия на ноутбук старше 36 часов", description: "Внешняя копия незаменимых данных на ноутбуке старше 36 часов. Свежий дамп Postgres на сервере и снимки на том же пуле её не заменяют. Сверить дату последнего успеха, журнал last-run.log и расписание scripts/backup-irreplaceable.sh на машине, которая забирает копию. Причину пропуска нельзя определить по одной старой отметке. Отсутствующую или нулевую отметку проверяет отдельная тревога.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "старше 36 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-laptop-backup-old", __dashboardUid__: "samoylove-hardware", __panelId__: "86" }
+
+      # Неизвестный возраст копии не заменяется вымышленными миллиардами секунд.
+      - uid: hw-laptop-backup-missing
+        title: 'Сервер: нет отметки внешней резервной копии'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: ((max(backup_laptop_last_success_timestamp_seconds) <= 0) or absent(backup_laptop_last_success_timestamp_seconds)) and on() (max(up{job="node-host"}) == 1)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 30m
+        labels:
+          severity: warning
+          area: server
+        annotations:
+          summary: Неизвестно, когда внешняя резервная копия завершилась успешно
+          description: Экспортёр хоста доступен, но положительной отметки backup_laptop_last_success_timestamp_seconds нет. Это неизвестное состояние внешней копии, а не её возраст. Проверить файл backup_laptop.prom и журнал копирования на ноутбуке. При недоступном экспортёре действует тревога сбора метрик, без второго сообщения о копии.
+          threshold: отметки нет 30 мин при доступном экспортёре
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-laptop-backup-missing
+          __dashboardUid__: samoylove-hardware
+          __panelId__: '86'
 
       # Подкачка cs2-win (30.09.2026, осмотр сервера): больше всего NVMe
       # изнашивает именно она, около 290 ГБ записи в сутки. Одной выделенной
@@ -2869,7 +2916,7 @@ groups:
         labels: { severity: warning, area: cs2 }
         annotations: { summary: "Больше трети походов за файлом кончаются обрывом связи", description: "Матчи копятся нескачанными, а окно хранения у Valve — тридцать дней: затянувшийся отказ превращается в потерю навсегда. Считается ПО ПОПЫТКАМ, а не по состоянию в базе: состояние помнит и то, что случилось месяц назад и починке не подлежит.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 30% попыток и не меньше 3 отказов за час, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-downloads-failing", __dashboardUid__: "samoylove-cs2", __panelId__: "208" }
       - uid: cs2-chain-waiting
-        title: "Пристрелка: матч ждёт разбора больше двух часов"
+        title: "Пристрелка: задержан разбор или отправка матча"
         condition: C
         data:
           - refId: A
@@ -2895,7 +2942,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Самое старое дело в цепочке висит дольше двух часов", description: "Игрок доиграл, обновляет страницу и не видит разбора. Панель «Сколько ждёт игрок» показывает, на каком шаге затор: ждёт счёта — работник Game Coordinator, ждёт файла — скачиватель, ждёт разбора — воркер. Обещано «сам и сразу», а не «к утру».", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 2 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-waiting", __dashboardUid__: "samoylove-cs2", __panelId__: "106" }
+        annotations: { summary: "Самое старое дело в цепочке висит дольше двух часов", description: "Игрок доиграл, обновляет страницу и не видит разбора. Панель «Сколько ждёт игрок» показывает, на каком шаге затор: ждёт счёта — работник Game Coordinator, ждёт файла — скачиватель, ждёт разбора — воркер. Для стадии «разобран» значение — просрочка срока отправки с учётом окончания сессии, ожидания клипа и тихих часов 00–09 МСК. Нулевая просрочка при непустой очереди ночью штатна.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 2 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-waiting", __dashboardUid__: "samoylove-cs2", __panelId__: "106" }
       - uid: cs2-chain-stalled
         title: "Пристрелка: цепочка встала"
         condition: C
@@ -3103,7 +3150,7 @@ groups:
               # звала чинить исправного работника. Застрял — значит, дела
               # ждали его всё это время и он не сделал ни одного.
               expr: |
-                (time() - cs2_worker_last_success_timestamp_seconds > 21600)
+                (time() - cs2_worker_last_success_timestamp_seconds{worker!="доставка"} > 21600)
                 and on(worker) min_over_time(cs2_worker_backlog[6h]) > 0
                 unless on(worker) cs2_worker_enabled == 0
               instant: true
@@ -3124,7 +3171,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Работник {{ $labels.worker }} шесть часов не сделал ни одного дела, хотя его ждут дела", description: "Работник запущен, очередь у него непустая (cs2_worker_backlog), а следов работы в базе шесть часов нет: круг падает молча. Для игрока это затор в цепочке без единой ошибки в журнале. Тишина при пустой очереди — норма (никто не играл) и тревогой не считается: до 11.09.2026 правило этого не различало и горело весь вечер. Очередь при этом должна быть непустой все шесть часов: дела, появившиеся после тихой ночи, работник ещё не обязан был сделать (с 27.09.2026).", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
+        annotations: { summary: "Работник {{ $labels.worker }} шесть часов не сделал ни одного дела, хотя его ждут дела", description: "Работник запущен, очередь у него непустая (cs2_worker_backlog), а следов работы в базе шесть часов нет: круг падает молча. Для игрока это затор в цепочке без единой ошибки в журнале. Тишина при пустой очереди — норма (никто не играл) и тревогой не считается: до 11.09.2026 правило этого не различало и горело весь вечер. Очередь при этом должна быть непустой все шесть часов: дела, появившиеся после тихой ночи, работник ещё не обязан был сделать (с 27.09.2026). Доставка исключена: сводки штатно ждут окончания сессии, клипа и тихих часов. Её задержку проверяет cs2-chain-waiting по просроченному сроку отправки, а не времени последней отправки.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
       - uid: cs2-worker-mark-silent
         title: "Пристрелка: фоновый работник молчит"
         condition: C
@@ -3421,7 +3468,7 @@ groups:
         labels: { severity: warning, area: cs2 }
         annotations: { summary: "За сутки израсходовано больше 80% из 100 000 вызовов ключа", description: "Упереться в потолок значит остановить У ВСЕХ и историю матчей, и профили, а выглядеть это будет как отказ Steam. Пятиминутный обход историй стоит 288 вызовов в сутки на игрока: примерно на трёхстах сорока игроках ключ выедается целиком, и обход обязан стать разным для активных и спящих.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 80%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-quota", __dashboardUid__: "samoylove-cs2", __panelId__: "510" }
       - uid: cs2-profiles-stale
-        title: "Пристрелка: профили Steam перестали обновляться"
+        title: "Пристрелка: накопились устаревшие профили Steam"
         condition: C
         data:
           - refId: A
@@ -3447,7 +3494,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше полусотни профилей опоздали с обновлением больше чем на сутки", description: "На страницах остаются старые ники и аватары — сервис показывает человека таким, каким он был вчера. Обычные причины две: ключ отозван или суточный потолок выеден другим сбором.", value: "{{ humanize $values.A.Value }}", threshold: "больше 50, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-profiles-stale", __dashboardUid__: "samoylove-cs2", __panelId__: "504" }
+        annotations: { summary: "Больше 50 профилей Steam не обновлялись дольше восьми суток", description: "Это возраст сохранённых ников и аватаров, а не доказательство остановки сборщика. Сначала сравнить с последним успешным циклом профилей и ответами GetPlayerSummaries. Если цикл свежий и ответы успешны, проверить охват: фоновый сбор выбирает участников последних матчей, а метрика считает все сохранённые профили, включая друзей и старый архив. Если цикл молчит — проверить журнал cs2-chain, доступность Steam и бюджет ключа. Порог не скрывает устаревшие данные при работающем сборе.", value: "{{ humanize $values.A.Value }}", threshold: "больше 50, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-profiles-stale", __dashboardUid__: "samoylove-cs2", __panelId__: "504" }
       - uid: cs2-telegram-down
         title: "Пристрелка: бот Telegram не отвечает"
         condition: C

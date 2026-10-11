@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build promtool tests from the actual Grafana render alert expressions.
+"""Build promtool tests from the actual Grafana render and operational alert expressions.
 
 python3 ci/render-alert-tests.py --output /tmp/render-alerts
 cd /tmp/render-alerts && promtool test rules render-alert-tests.yml
@@ -15,7 +15,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 UIDS = frozenset(("cs2-render-failed", "cs2-render-disk-unknown",
-                  "cs2-render-disk-low", "cs2-render-first-try-low"))
+                  "cs2-render-disk-low", "cs2-render-first-try-low",
+                  "cs2-worker-silent", "cs2-chain-waiting", "cs2-profiles-stale",
+                  "hw-laptop-backup-old", "hw-laptop-backup-missing"))
 
 
 def load_rules(path):
@@ -30,7 +32,7 @@ def load_rules(path):
                 raise ValueError(f"duplicate rule uid: {uid}")
             data = {query["refId"]: query for query in rule["data"]}
             model = data[rule["condition"]]["model"]
-            # These four rules use a filtered instant PromQL vector. The C
+            # These rules use a filtered instant PromQL vector. The C
             # threshold accepts all their nonnegative samples, including zero.
             # Stop if provisioning changes to a different evaluator or chain;
             # otherwise native Prometheus would test a different condition.
