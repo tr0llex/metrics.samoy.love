@@ -135,7 +135,7 @@ groups:
           summary: 'Сервер: на системном диске мало места'
           description: 'На корневом диске цели {{ $labels.job }} осталось менее 10%. Для web действует собственная квота ZFS: свободное место общего пула её не отменяет. Проверить крупные
             версии контента и снимки перед удалением; не делать blanket prune.'
-          value: '{{ humanizePercentage $values.A.Value }}'
+          value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}'
           threshold: меньше 10%, держится 15 мин
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-disk-space-low
           __dashboardUid__: samoylove-reliability
@@ -170,7 +170,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Процессор хоста занят больше чем на 90% полчаса подряд", description: "Все контейнеры делят одни ядра: при полной загрузке тормозят сайты и растут очереди CI и рендера. Смотреть «Процессор по инстансам» — кто съел; обычно это CI-сборки или рендер.", value: "{{ printf \"%.0f\" $values.A.Value }}%", threshold: "больше 90%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-cpu-saturated", __dashboardUid__: "samoylove-hardware", __panelId__: "15" }
+        annotations: { summary: "Процессор хоста занят больше чем на 90% полчаса подряд", description: "Все контейнеры делят одни ядра: при полной загрузке тормозят сайты и растут очереди CI и рендера. Смотреть «Процессор по инстансам» — кто съел; обычно это CI-сборки или рендер.", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }}%{{ else }}нет данных{{ end }}', threshold: "больше 90%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-cpu-saturated", __dashboardUid__: "samoylove-hardware", __panelId__: "15" }
 
       - uid: infra-node-rebooted
         title: "Сервер: хост перезагрузился"
@@ -237,7 +237,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Интерфейс {{ $labels.device }} получает или отправляет пакеты с ошибками", description: "Ошибки на физическом интерфейсе — кабель, порт роутера или драйвер. Сайты в это время могут открываться рывками. Смотреть «Ошибки и обрывы линка» и ethtool -S на хосте.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-network-errors-high", __dashboardUid__: "samoylove-hardware", __panelId__: "53" }
+        annotations: { summary: "Интерфейс {{ $labels.device }} получает или отправляет пакеты с ошибками", description: "Ошибки на физическом интерфейсе — кабель, порт роутера или драйвер. Сайты в это время могут открываться рывками. Смотреть «Ошибки и обрывы линка» и ethtool -S на хосте.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-network-errors-high", __dashboardUid__: "samoylove-hardware", __panelId__: "53" }
 
   # Железо и инфраструктура хоста. Появилось вместе со вторым node_exporter,
   # который стоит на самом хосте: стек метрик живёт в контейнере web и до
@@ -293,7 +293,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: server }
-        annotations: { summary: "Процессор держит 94 °C и сбрасывает частоту ниже базовой, или выше 97 °C", description: "Процессор 15 минут у предела 95 °C и при этом ниже базовой частоты 4,2 ГГц — охлаждение не справляется и отнимает производительность; или температура выше 97 °C — защита не удерживает предел. Штатный упор в 95 °C при нагрузке на полной частоте тревогой не считается. Проверить обороты кулера и пыль, график частоты — «Железо».", value: "{{ printf \"%.0f\" $values.A.Value }} °C", threshold: "больше 97 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-cpu-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "9" }
+        annotations: { summary: "Процессор держит 94 °C и сбрасывает частоту ниже базовой, или выше 97 °C", description: "Процессор 15 минут у предела 95 °C и при этом ниже базовой частоты 4,2 ГГц — охлаждение не справляется и отнимает производительность; или температура выше 97 °C — защита не удерживает предел. Штатный упор в 95 °C при нагрузке на полной частоте тревогой не считается. Проверить обороты кулера и пыль, график частоты — «Железо».", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }} °C{{ else }}нет данных{{ end }}', threshold: "больше 97 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-cpu-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "9" }
 
       - uid: hw-dimm-temp-high
         title: "Сервер: модуль памяти перегрет"
@@ -322,7 +322,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Модуль DDR5 горячее 65 °C", description: "На этой машине нет ECC: перегретая память — это тихие ошибки данных. Ослабить tRFC с 600 до 700–800 в BIOS или улучшить обдув.", value: "{{ printf \"%.0f\" $values.A.Value }} °C", threshold: "больше 65 °C, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-dimm-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "10" }
+        annotations: { summary: "Модуль DDR5 горячее 65 °C", description: "На этой машине нет ECC: перегретая память — это тихие ошибки данных. Ослабить tRFC с 600 до 700–800 в BIOS или улучшить обдув.", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }} °C{{ else }}нет данных{{ end }}', threshold: "больше 65 °C, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-dimm-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "10" }
 
       - uid: hw-nvme-temp-high
         title: "Сервер: NVMe перегрет"
@@ -351,7 +351,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: server }
-        annotations: { summary: "NVMe горячее 70 °C: контроллер начинает сбрасывать скорость", description: "Диск троттлит — медленнее запись демок, клипов и баз. Обычно следствие долгой записи (рендер, CI) без обдува.", value: "{{ printf \"%.0f\" $values.A.Value }} °C", threshold: "больше 70 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "10" }
+        annotations: { summary: "NVMe горячее 70 °C: контроллер начинает сбрасывать скорость", description: "Диск троттлит — медленнее запись демок, клипов и баз. Обычно следствие долгой записи (рендер, CI) без обдува.", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }} °C{{ else }}нет данных{{ end }}', threshold: "больше 70 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "10" }
 
       - uid: hw-cpu-fan-stopped
         title: "Сервер: кулер процессора стоит"
@@ -438,7 +438,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: critical, area: server }
-        annotations: { summary: "ZFS сообщает об ошибках чтения, записи или контрольных сумм", description: "ECC на этой машине нет, контрольные суммы ZFS — единственный сигнал о порче данных. zpool status -v, затем zpool scrub и SMART обоих дисков.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-errors", __dashboardUid__: "samoylove-hardware", __panelId__: "22" }
+        annotations: { summary: "ZFS сообщает об ошибках чтения, записи или контрольных сумм", description: "ECC на этой машине нет, контрольные суммы ZFS — единственный сигнал о порче данных. zpool status -v, затем zpool scrub и SMART обоих дисков.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-errors", __dashboardUid__: "samoylove-hardware", __panelId__: "22" }
 
       - uid: hw-nvme-media-errors
         title: "Сервер: у NVMe неисправимые ошибки носителя"
@@ -467,7 +467,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: critical, area: server }
-        annotations: { summary: "SMART сообщает о неисправимых ошибках носителя", description: "Диск начал терять данные. Пока зеркало ZFS цело, данные спасает второй диск; пора планировать замену.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-media-errors", __dashboardUid__: "samoylove-hardware", __panelId__: "21" }
+        annotations: { summary: "SMART сообщает о неисправимых ошибках носителя", description: "Диск начал терять данные. Пока зеркало ZFS цело, данные спасает второй диск; пора планировать замену.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-media-errors", __dashboardUid__: "samoylove-hardware", __panelId__: "21" }
 
       - uid: hw-nvme-wear-high
         title: "Сервер: NVMe изношен на 80%"
@@ -496,7 +496,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: server }
-        annotations: { summary: "Износ NVMe больше 80% заявленного ресурса", description: "Диск ещё работает, но ресурс записи кончается. Смотреть «Записано за сутки»: кто пишет больше всех (рендер, CI) и планировать замену.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 80%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-wear-high", __dashboardUid__: "samoylove-hardware", __panelId__: "19" }
+        annotations: { summary: "Износ NVMe больше 80% заявленного ресурса", description: "Диск ещё работает, но ресурс записи кончается. Смотреть «Записано за сутки»: кто пишет больше всех (рендер, CI) и планировать замену.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 80%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-wear-high", __dashboardUid__: "samoylove-hardware", __panelId__: "19" }
 
       - uid: hw-host-unit-down
         title: "Сервер: служба инфраструктуры хоста не работает"
@@ -679,7 +679,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: server }
-        annotations: { summary: "В {{ $labels.name }} OOM-killer убил процесс", description: "Процесс убит за нехватку памяти в инстансе (метка name): он умер молча, и то, что он делал, не доехало. Разбор 19.09.2026: все 17 убийств в web — это Chromium рендерера скриншотов с лимитом 512 МБ, шесть в cs2-render — старый потолок игры, поднятый с тех пор. Считается increase, а не changes: у одноразовых раннеров счётчик обнуляется на каждом задании, поэтому они исключены по имени — и большие ci-runner, и лёгкие ci-light. Нарочные потолки внутри cs2 (работник, разбор демки под limitmem) метрика Incus отличить не умеет — для этого нужен сбор по cgroup. С 29.09.2026 cs2-render здесь не считается: 55 убийств за неделю давали сообщение на каждое, у рендера теперь своя тревога с порогом — «Пристрелка: рендер убивают по памяти».", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-instance-oom-kills", __dashboardUid__: "samoylove-hardware", __panelId__: "58" }
+        annotations: { summary: "В {{ $labels.name }} OOM-killer убил процесс", description: "Процесс убит за нехватку памяти в инстансе (метка name): он умер молча, и то, что он делал, не доехало. Разбор 19.09.2026: все 17 убийств в web — это Chromium рендерера скриншотов с лимитом 512 МБ, шесть в cs2-render — старый потолок игры, поднятый с тех пор. Считается increase, а не changes: у одноразовых раннеров счётчик обнуляется на каждом задании, поэтому они исключены по имени — и большие ci-runner, и лёгкие ci-light. Нарочные потолки внутри cs2 (работник, разбор демки под limitmem) метрика Incus отличить не умеет — для этого нужен сбор по cgroup. С 29.09.2026 cs2-render здесь не считается: 55 убийств за неделю давали сообщение на каждое, у рендера теперь своя тревога с порогом — «Пристрелка: рендер убивают по памяти».", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-instance-oom-kills", __dashboardUid__: "samoylove-hardware", __panelId__: "58" }
 
       - uid: hw-memory-pressure
         title: 'Сервер: хост задыхается без памяти'
@@ -724,7 +724,7 @@ groups:
           summary: Все задачи хоста стоят в ожидании памяти больше 20% времени
           description: 'Хост долго ждёт память и доступно менее 10%. Сравнить MemAvailable, SUnreclaim, ARC и PSI по контейнерам. PSI разных cgroup нельзя вычитать из PSI хоста: временные
             интервалы пересекаются. Отдельное давление web и баз контролирует правило hw-prod-memory-pressure. Не перезапускать прод вслепую.'
-          value: '{{ humanizePercentage $values.A.Value }}'
+          value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}'
           threshold: PSI full > 20% и доступно < 10%, 10 минут
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-memory-pressure
           __dashboardUid__: samoylove-reliability
@@ -761,7 +761,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: server }
-        annotations: { summary: "{{ $labels.name }} стоит в ожидании памяти больше 5% времени", description: "Все задачи {{ $labels.name }} больше 5% времени ждут память: страдают сайт, базы или службы хоста. Упор раннеров CI в свой потолок сюда не входит. Кто занял память — панели «Давление на память по контейнерам» и «Память по инстансам».", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-prod-memory-pressure", __dashboardUid__: "samoylove-hardware", __panelId__: "80" }
+        annotations: { summary: "{{ $labels.name }} стоит в ожидании памяти больше 5% времени", description: "Все задачи {{ $labels.name }} больше 5% времени ждут память: страдают сайт, базы или службы хоста. Упор раннеров CI в свой потолок сюда не входит. Кто занял память — панели «Давление на память по контейнерам» и «Память по инстансам».", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-prod-memory-pressure", __dashboardUid__: "samoylove-hardware", __panelId__: "80" }
 
       - uid: hw-host-global-oom
         title: "Сервер: ядро убивало процессы от нехватки памяти"
@@ -790,7 +790,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: critical, area: server }
-        annotations: { summary: "Память кончилась на всём хосте, ядро убило процесс", description: "Ядро убило процесс из-за нехватки памяти на всём хосте, а не внутри потолка инстанса: жертвой мог стать Postgres или ClickHouse прода. «Сервер: в контейнере убит процесс по памяти» такое не видит — он считает только счётчики инстансов. Считается по строкам ядра oom-kill с global_oom (node-textfile-collect): node_vmstat_oom_kill растёт и от потолка контейнера, и 22.09.2026 так ложно сработал на рендерере Grafana. 21.09.2026 так было дважды (steamwebhelper, процессы раннеров). Кто съел — «Сервер: хост задыхается без памяти» и панель «Память инстансов»; журнал — journalctl -k | grep global_oom.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-host-global-oom", __dashboardUid__: "samoylove-hardware", __panelId__: "58" }
+        annotations: { summary: "Память кончилась на всём хосте, ядро убило процесс", description: "Ядро убило процесс из-за нехватки памяти на всём хосте, а не внутри потолка инстанса: жертвой мог стать Postgres или ClickHouse прода. «Сервер: в контейнере убит процесс по памяти» такое не видит — он считает только счётчики инстансов. Считается по строкам ядра oom-kill с global_oom (node-textfile-collect): node_vmstat_oom_kill растёт и от потолка контейнера, и 22.09.2026 так ложно сработал на рендерере Grafana. 21.09.2026 так было дважды (steamwebhelper, процессы раннеров). Кто съел — «Сервер: хост задыхается без памяти» и панель «Память инстансов»; журнал — journalctl -k | grep global_oom.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-host-global-oom", __dashboardUid__: "samoylove-hardware", __panelId__: "58" }
 
       - uid: hw-zpool-capacity-high
         title: "Сервер: пул ZFS заполнен на 80%"
@@ -819,7 +819,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Пул ZFS заполнен больше чем на 80%", description: "Пул заполнен больше чем на 80 %: у ZFS после этого падает скорость записи и растёт фрагментация. «Сервер: в контейнере web кончается диск» смотрит только корень хоста (ext4), пул он не видит. Смотреть zfs list -o space: снимки sanoid, квоты демок и клипов, диск cs2-win.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 80%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-capacity-high", __dashboardUid__: "samoylove-hardware", __panelId__: "52" }
+        annotations: { summary: "Пул ZFS заполнен больше чем на 80%", description: "Пул заполнен больше чем на 80 %: у ZFS после этого падает скорость записи и растёт фрагментация. «Сервер: в контейнере web кончается диск» смотрит только корень хоста (ext4), пул он не видит. Смотреть zfs list -o space: снимки sanoid, квоты демок и клипов, диск cs2-win.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 80%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-capacity-high", __dashboardUid__: "samoylove-hardware", __panelId__: "52" }
 
       - uid: hw-zpool-capacity-critical
         title: "Сервер: пул ZFS почти полон"
@@ -848,7 +848,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: server }
-        annotations: { summary: "Пул ZFS заполнен больше чем на 90%", description: "Пул заполнен больше чем на 90 %: до остановки записи на всех контейнерах недалеко. Освобождать место сейчас: старые снимки, кэш CI (/srv/ci-cache), тома игр.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 90%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-capacity-critical", __dashboardUid__: "samoylove-hardware", __panelId__: "52" }
+        annotations: { summary: "Пул ZFS заполнен больше чем на 90%", description: "Пул заполнен больше чем на 90 %: до остановки записи на всех контейнерах недалеко. Освобождать место сейчас: старые снимки, кэш CI (/srv/ci-cache), тома игр.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 90%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-capacity-critical", __dashboardUid__: "samoylove-hardware", __panelId__: "52" }
 
       - uid: hw-smart-unhealthy
         title: "Сервер: диск сообщает о поломке"
@@ -906,7 +906,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Задачи хоста ждут ввод-вывод больше 15% времени", description: "Все задачи хоста больше 15% времени ждут диск (PSI): упор в NVMe. За неделю до 19.09.2026 максимум был 6%. Смотреть занятость NVMe и запись по инстансам.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 15%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-io-pressure", __dashboardUid__: "samoylove-hardware", __panelId__: "40" }
+        annotations: { summary: "Задачи хоста ждут ввод-вывод больше 15% времени", description: "Все задачи хоста больше 15% времени ждут диск (PSI): упор в NVMe. За неделю до 19.09.2026 максимум был 6%. Смотреть занятость NVMe и запись по инстансам.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 15%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-io-pressure", __dashboardUid__: "samoylove-hardware", __panelId__: "40" }
 
       - uid: hw-swap-thrashing
         title: "Сервер: хост гоняет swap туда-обратно"
@@ -935,7 +935,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Хост непрерывно выгружает и подгружает страницы swap", description: "Страницы одновременно и вытесняются в swap, и читаются обратно — памяти не хватает прямо сейчас, всё тормозит. Swap за неделю до 19.09.2026 бывал занят до 7 из 8 ГиБ.", value: "{{ humanize $values.A.Value }}", threshold: "больше 1000, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-swap-thrashing", __dashboardUid__: "samoylove-hardware", __panelId__: "41" }
+        annotations: { summary: "Хост непрерывно выгружает и подгружает страницы swap", description: "Страницы одновременно и вытесняются в swap, и читаются обратно — памяти не хватает прямо сейчас, всё тормозит. Swap за неделю до 19.09.2026 бывал занят до 7 из 8 ГиБ.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 1000, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-swap-thrashing", __dashboardUid__: "samoylove-hardware", __panelId__: "41" }
 
       - uid: hw-zpool-scrub-overdue
         title: "Сервер: проверка ZFS не проходила 40 дней"
@@ -964,7 +964,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: server }
-        annotations: { summary: "Ежемесячный scrub пула ZFS не завершался 40 дней", description: "Ежемесячный scrub пула пропущен (таймер zfs-scrub-monthly@tank). Без него тихая порча данных на диске не обнаруживается.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 40 дн, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-scrub-overdue", __dashboardUid__: "samoylove-hardware", __panelId__: "44" }
+        annotations: { summary: "Ежемесячный scrub пула ZFS не завершался 40 дней", description: "Ежемесячный scrub пула пропущен (таймер zfs-scrub-monthly@tank). Без него тихая порча данных на диске не обнаруживается.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 40 дн, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-zpool-scrub-overdue", __dashboardUid__: "samoylove-hardware", __panelId__: "44" }
 
       - uid: hw-nvme-spare-low
         title: "Сервер: у NVMe кончается резерв блоков"
@@ -993,7 +993,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: server }
-        annotations: { summary: "Резерв запасных блоков NVMe меньше 20%", description: "Резерв запасных блоков NVMe кончается — диск начал активно заменять изношенные ячейки. Готовить замену диска.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "меньше 20%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-spare-low", __dashboardUid__: "samoylove-hardware", __panelId__: "46" }
+        annotations: { summary: "Резерв запасных блоков NVMe меньше 20%", description: "Резерв запасных блоков NVMe кончается — диск начал активно заменять изношенные ячейки. Готовить замену диска.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 20%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-spare-low", __dashboardUid__: "samoylove-hardware", __panelId__: "46" }
 
       - uid: hw-nvme-write-rate-high
         title: "Сервер: на NVMe пишут больше 1,1 ТБ в сутки"
@@ -1022,7 +1022,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: server }
-        annotations: { summary: "Запись на NVMe больше 1,1 ТБ за сутки", description: "При такой записи ресурс Kingston (1000 ТБ) уйдёт меньше чем за 2,5 года. 19.09.2026 было около 437 ГБ в сутки на диск. Искать, кто пишет: запись по инстансам и датасетам.", value: "{{ humanize1024 $values.A.Value }}Б", threshold: "больше 1,1 ТБ, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-write-rate-high", __dashboardUid__: "samoylove-hardware", __panelId__: "25" }
+        annotations: { summary: "Запись на NVMe больше 1,1 ТБ за сутки", description: "При такой записи ресурс Kingston (1000 ТБ) уйдёт меньше чем за 2,5 года. 19.09.2026 было около 437 ГБ в сутки на диск. Искать, кто пишет: запись по инстансам и датасетам.", value: '{{ if $values.A }}{{ humanize1024 $values.A.Value }}Б{{ else }}нет данных{{ end }}', threshold: "больше 1,1 ТБ, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-nvme-write-rate-high", __dashboardUid__: "samoylove-hardware", __panelId__: "25" }
 
       - uid: hw-win-exporter-down
         title: "Сервер: cs2-win не отдаёт метрики"
@@ -1109,7 +1109,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: server }
-        annotations: { summary: "GPU cs2-win горячее 84 °C 10 минут", description: "У GTX 1080 Ti с 84 °C начинается сброс частот, около 91 °C — аварийный. Десять минут выше 84 — карте не хватает продува в корпусе сервера: рендер замедлится раньше, чем что-то сломается.", value: "{{ printf \"%.0f\" $values.A.Value }} °C", threshold: "больше 84 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-gpu-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "71" }
+        annotations: { summary: "GPU cs2-win горячее 84 °C 10 минут", description: "У GTX 1080 Ti с 84 °C начинается сброс частот, около 91 °C — аварийный. Десять минут выше 84 — карте не хватает продува в корпусе сервера: рендер замедлится раньше, чем что-то сломается.", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }} °C{{ else }}нет данных{{ end }}', threshold: "больше 84 °C, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-gpu-temp-high", __dashboardUid__: "samoylove-hardware", __panelId__: "71" }
 
       - uid: hw-link-flap
         title: "Сервер: проводной линк моргнул"
@@ -1141,7 +1141,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Проводной интерфейс eno1 терял несущую", description: "Проводной линк сервера пропадал за последний час. За неделю до 19.09.2026 было 4 перепада — кабель или порт роутера.", value: "{{ humanize $values.A.Value }}", threshold: "больше 3600", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-link-flap", __dashboardUid__: "samoylove-hardware", __panelId__: "53" }
+        annotations: { summary: "Проводной интерфейс eno1 терял несущую", description: "Проводной линк сервера пропадал за последний час. За неделю до 19.09.2026 было 4 перепада — кабель или порт роутера.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 3600", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-link-flap", __dashboardUid__: "samoylove-hardware", __panelId__: "53" }
 
       - uid: hw-time-not-synced
         title: "Сервер: часы хоста не синхронизированы"
@@ -1205,7 +1205,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Самому свежему снимку sanoid датасета {{ $labels.dataset }} больше 28 часов", description: "Снимки делаются раз в сутки, значит, последний прогон sanoid этот датасет не снял, и точки отката за сегодня нет. На хосте: systemctl status sanoid.timer sanoid.service, journalctl -u sanoid, zfs list -t snapshot -o name,creation -s creation <датасет>. Если метки dataset нет, сборщик не смог прочитать sanoid.conf или список снимков: journalctl -u node-textfile-collect.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "старше 28 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-snapshots-stale", __dashboardUid__: "samoylove-hardware", __panelId__: "85" }
+        annotations: { summary: "Самому свежему снимку sanoid датасета {{ $labels.dataset }} больше 28 часов", description: "Снимки делаются раз в сутки, значит, последний прогон sanoid этот датасет не снял, и точки отката за сегодня нет. На хосте: systemctl status sanoid.timer sanoid.service, journalctl -u sanoid, zfs list -t snapshot -o name,creation -s creation <датасет>. Если метки dataset нет, сборщик не смог прочитать sanoid.conf или список снимков: journalctl -u node-textfile-collect.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "старше 28 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-snapshots-stale", __dashboardUid__: "samoylove-hardware", __panelId__: "85" }
 
       # Копия незаменимого на ноутбук владельца (30.09.2026). Её делает
       # Windows-машина владельца скриптом home-server
@@ -1244,7 +1244,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Последняя удачная копия на ноутбук старше 36 часов", description: "Внешняя копия незаменимых данных на ноутбуке старше 36 часов. Свежий дамп Postgres на сервере и снимки на том же пуле её не заменяют. Сверить дату последнего успеха, журнал last-run.log и расписание scripts/backup-irreplaceable.sh на машине, которая забирает копию. Причину пропуска нельзя определить по одной старой отметке. Отсутствующую или нулевую отметку проверяет отдельная тревога.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "старше 36 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-laptop-backup-old", __dashboardUid__: "samoylove-hardware", __panelId__: "86" }
+        annotations: { summary: "Последняя удачная копия на ноутбук старше 36 часов", description: "Внешняя копия незаменимых данных на ноутбуке старше 36 часов. Свежий дамп Postgres на сервере и снимки на том же пуле её не заменяют. Сверить дату последнего успеха, журнал last-run.log и расписание scripts/backup-irreplaceable.sh на машине, которая забирает копию. Причину пропуска нельзя определить по одной старой отметке. Отсутствующую или нулевую отметку проверяет отдельная тревога.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "старше 36 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-laptop-backup-old", __dashboardUid__: "samoylove-hardware", __panelId__: "86" }
 
       # Неизвестный возраст копии не заменяется вымышленными миллиардами секунд.
       - uid: hw-laptop-backup-missing
@@ -1327,7 +1327,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: server }
-        annotations: { summary: "Windows на cs2-win выделила больше памяти, чем есть, и гоняет подкачку", description: "Выделенная память Windows больше физической, и подкачка идёт быстрее 1000 операций в секунду полчаса подряд. Каждая такая операция — запись на NVMe хоста: 30.09.2026 подкачка cs2-win давала около 290 ГБ записи в сутки. На панели видно, какой процесс раздулся: чаще всего клиент Steam (с cs2#866 он перезапускается сам) или зависшая игра. На машине: ssh render@cs2-win, Get-Process | Sort-Object WS -Descending.", value: "{{ humanizePercentage $values.A.Value }} физической", threshold: "выделено больше физической и больше 1000 опер/с, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-win-commit-over-physical", __dashboardUid__: "samoylove-hardware", __panelId__: "74" }
+        annotations: { summary: "Windows на cs2-win выделила больше памяти, чем есть, и гоняет подкачку", description: "Выделенная память Windows больше физической, и подкачка идёт быстрее 1000 операций в секунду полчаса подряд. Каждая такая операция — запись на NVMe хоста: 30.09.2026 подкачка cs2-win давала около 290 ГБ записи в сутки. На панели видно, какой процесс раздулся: чаще всего клиент Steam (с cs2#866 он перезапускается сам) или зависшая игра. На машине: ssh render@cs2-win, Get-Process | Sort-Object WS -Descending.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }} физической{{ else }}нет данных{{ end }}', threshold: "выделено больше физической и больше 1000 опер/с, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-win-commit-over-physical", __dashboardUid__: "samoylove-hardware", __panelId__: "74" }
 
       # Обновления безопасности хоста (30.09.2026). Метрики пишет таймер пакета
       # prometheus-node-exporter-collectors (apt.prom). unattended-upgrades
@@ -1364,7 +1364,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: server }
-        annotations: { summary: "На хосте двое суток ждут обновления безопасности", description: "unattended-upgrades ставит обновления безопасности каждый день, а эти ждут уже двое суток: установка падает или стоит. На хосте: apt list --upgradable, journalctl -u apt-daily-upgrade, /var/log/unattended-upgrades/unattended-upgrades.log. Отложенные пакеты (held) сюда не входят, их видно на панели отдельно.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0 все двое суток, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-security-updates-pending", __dashboardUid__: "samoylove-hardware", __panelId__: "87" }
+        annotations: { summary: "На хосте двое суток ждут обновления безопасности", description: "unattended-upgrades ставит обновления безопасности каждый день, а эти ждут уже двое суток: установка падает или стоит. На хосте: apt list --upgradable, journalctl -u apt-daily-upgrade, /var/log/unattended-upgrades/unattended-upgrades.log. Отложенные пакеты (held) сюда не входят, их видно на панели отдельно.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0 все двое суток, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-security-updates-pending", __dashboardUid__: "samoylove-hardware", __panelId__: "87" }
 
       # Хосту нужна перезагрузка (30.09.2026): /var/run/reboot-required, метрика
       # из того же apt.prom. Перезагрузку хоста решает владелец — она гасит
@@ -1528,7 +1528,7 @@ groups:
         execErrState: Error
         for: 1m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Событие выкатки ждёт в очереди больше 5 минут", description: "Сообщения о релизах не уходят в чат. Смотреть статус-бота на дашборде «Статус».", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 5 мин, держится 1 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-deploy-event-delivery-stuck", __dashboardUid__: "samoylove-status", __panelId__: "43" }
+        annotations: { summary: "Событие выкатки ждёт в очереди больше 5 минут", description: "Сообщения о релизах не уходят в чат. Смотреть статус-бота на дашборде «Статус».", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 5 мин, держится 1 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-deploy-event-delivery-stuck", __dashboardUid__: "samoylove-status", __panelId__: "43" }
 
       - uid: infra-deploy-event-metrics-missing
         title: "Сайты: у бота нет счётчиков выкатки"
@@ -1620,7 +1620,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Сертификат {{ $labels.instance }} истекает меньше чем через 14 дней", description: "certbot не продлил сертификат. sudo certbot renew --dry-run в web.", value: "{{ humanize $values.A.Value }}", threshold: "меньше 14, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-certificate-expiring-soon", __dashboardUid__: "samoylove-overview", __panelId__: "29" }
+        annotations: { summary: "Сертификат {{ $labels.instance }} истекает меньше чем через 14 дней", description: "certbot не продлил сертификат. sudo certbot renew --dry-run в web.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 14, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-certificate-expiring-soon", __dashboardUid__: "samoylove-overview", __panelId__: "29" }
 
       - uid: infra-probe-latency-high
         title: "Сайты: сайт отвечает медленно"
@@ -1649,7 +1649,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "{{ $labels.instance }} отвечает на внешнюю пробу дольше 3 секунд", description: "Сайт открывается, но медленно. Лежащий сайт сюда не попадает: для него есть «Сайты: сайт не открывается».", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-probe-latency-high", __dashboardUid__: "samoylove-overview", __panelId__: "30" }
+        annotations: { summary: "{{ $labels.instance }} отвечает на внешнюю пробу дольше 3 секунд", description: "Сайт открывается, но медленно. Лежащий сайт сюда не попадает: для него есть «Сайты: сайт не открывается».", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-probe-latency-high", __dashboardUid__: "samoylove-overview", __panelId__: "30" }
 
       - uid: infra-status-check-down
         title: "Сайты: проверка статус-страницы красная"
@@ -1722,7 +1722,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "{{ $labels.host }}: больше 5% ответов с кодом 5xx", description: "Страницы у людей не открываются. Какой раздел — «Запросы по разделам» на дашборде сайта; у cs.samoy.love — «Ошибки по разделам» Пристрелки.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 2000%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-site-error-rate-high", __dashboardUid__: "samoylove-overview", __panelId__: "10" }
+        annotations: { summary: "{{ $labels.host }}: больше 5% ответов с кодом 5xx", description: "Страницы у людей не открываются. Какой раздел — «Запросы по разделам» на дашборде сайта; у cs.samoy.love — «Ошибки по разделам» Пристрелки.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 2000%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-site-error-rate-high", __dashboardUid__: "samoylove-overview", __panelId__: "10" }
 
       - uid: product-traffic-collapse
         title: "Сайты: посещаемость упала впятеро"
@@ -1757,7 +1757,7 @@ groups:
         execErrState: Error
         for: 2h
         labels: { severity: warning, area: sites }
-        annotations: { summary: "{{ $labels.host }}: заходов на главную впятеро меньше, чем неделю назад", description: "Сравнение идёт с тем же окном неделю назад. С 20.09.2026 журнал посещаемости не считает наши собственные проверки — проба blackbox и агент статус-страницы давали у тихих сайтов почти весь трафик главной. Неделю после этой правки сравнивать не с чем: прошлая неделя ещё с пробами, и любое окно выглядит падением в тридцать раз. Отсюда условие на время в выражении: правило молчит до 29.09.2026, когда в сравнение попадёт неделя чистых данных. После этой даты условие убрать.", value: "{{ humanize $values.A.Value }}", threshold: "держится 2 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-traffic-collapse", __dashboardUid__: "samoylove-overview", __panelId__: "32" }
+        annotations: { summary: "{{ $labels.host }}: заходов на главную впятеро меньше, чем неделю назад", description: "Сравнение идёт с тем же окном неделю назад. С 20.09.2026 журнал посещаемости не считает наши собственные проверки — проба blackbox и агент статус-страницы давали у тихих сайтов почти весь трафик главной. Неделю после этой правки сравнивать не с чем: прошлая неделя ещё с пробами, и любое окно выглядит падением в тридцать раз. Отсюда условие на время в выражении: правило молчит до 29.09.2026, когда в сравнение попадёт неделя чистых данных. После этой даты условие убрать.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 2 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-traffic-collapse", __dashboardUid__: "samoylove-overview", __panelId__: "32" }
 
       - uid: product-site-latency-high
         title: "Сайты: nginx отвечает медленно"
@@ -1804,7 +1804,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "{{ $labels.host }}: 95-й перцентиль ответа nginx дольше секунды", description: "Страницы открываются медленно. У cs.samoy.love своя, точнее, тревога по разделам сайта — здесь его нет: отдача роликов и звука делала ему p95 секундами (38 ложных срабатываний за две недели сентября).", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 1 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-site-latency-high", __dashboardUid__: "samoylove-overview", __panelId__: "33" }
+        annotations: { summary: "{{ $labels.host }}: 95-й перцентиль ответа nginx дольше секунды", description: "Страницы открываются медленно. У cs.samoy.love своя, точнее, тревога по разделам сайта — здесь его нет: отдача роликов и звука делала ему p95 секундами (38 ложных срабатываний за две недели сентября).", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 1 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-site-latency-high", __dashboardUid__: "samoylove-overview", __panelId__: "33" }
 
       - uid: product-access-log-parse-failing
         title: "Сайты: журнал nginx не разбирается"
@@ -1833,7 +1833,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Строки журнала nginx не разбираются экспортёром", description: "log_format nginx и формат экспортёра разошлись: посещаемость и пятисотки по сайтам перестали считаться.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-access-log-parse-failing", __dashboardUid__: "samoylove-overview", __panelId__: "34" }
+        annotations: { summary: "Строки журнала nginx не разбираются экспортёром", description: "log_format nginx и формат экспортёра разошлись: посещаемость и пятисотки по сайтам перестали считаться.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-access-log-parse-failing", __dashboardUid__: "samoylove-overview", __panelId__: "34" }
 
       - uid: product-event-receiver-errors
         title: "Сайты: приёмник событий отвечает не 204"
@@ -1862,7 +1862,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Приёмник событий интерфейса ответил не 204", description: "Приёмник событий сайтов обязан отвечать только 204; любой другой код — потерянные события.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-event-receiver-errors", __dashboardUid__: "samoylove-site", __panelId__: "24" }
+        annotations: { summary: "Приёмник событий интерфейса ответил не 204", description: "Приёмник событий сайтов обязан отвечать только 204; любой другой код — потерянные события.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-event-receiver-errors", __dashboardUid__: "samoylove-site", __panelId__: "24" }
 
       - uid: product-probe-disagrees-with-agent
         title: "Сайты: проба и агент статуса расходятся"
@@ -1930,7 +1930,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Больше 40% установок за час не завершились", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 500%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-install-failure-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "39" }
+        annotations: { summary: "Больше 40% установок за час не завершились", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 500%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-install-failure-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "39" }
 
       - uid: product-diff-updates-not-working
         title: "Лаунчер: обновления качаются целиком"
@@ -1964,7 +1964,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 80% обновлений скачали сборку целиком — дифф не работает", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 500%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-diff-updates-not-working", __dashboardUid__: "samoylove-chillhub", __panelId__: "40" }
+        annotations: { summary: "Больше 80% обновлений скачали сборку целиком — дифф не работает", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 500%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-diff-updates-not-working", __dashboardUid__: "samoylove-chillhub", __panelId__: "40" }
 
       - uid: product-hash-mismatches-high
         title: "Лаунчер: файлы не сходятся с манифестом"
@@ -1993,7 +1993,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше десяти файлов за час не совпали с манифестом", value: "{{ humanize $values.A.Value }}", threshold: "больше 10, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-hash-mismatches-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "36" }
+        annotations: { summary: "Больше десяти файлов за час не совпали с манифестом", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 10, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-hash-mismatches-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "36" }
 
       - uid: product-launcher-error-rate-high
         title: "Лаунчер: больше 5% ответов — пятисотки"
@@ -2025,7 +2025,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Больше 5% ответов лаунчера с кодом 5xx", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-launcher-error-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "41" }
+        annotations: { summary: "Больше 5% ответов лаунчера с кодом 5xx", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-launcher-error-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "41" }
 
       - uid: product-telemetry-rejected
         title: "Лаунчер: телеметрия отвергается"
@@ -2065,7 +2065,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 20 отвергнутых отчётов телеметрии за час", value: "{{ humanize $values.A.Value }}", threshold: "больше 20, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telemetry-rejected", __dashboardUid__: "samoylove-chillhub", __panelId__: "999" }
+        annotations: { summary: "Больше 20 отвергнутых отчётов телеметрии за час", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 20, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telemetry-rejected", __dashboardUid__: "samoylove-chillhub", __panelId__: "999" }
 
       - uid: product-telemetry-junk-flood
         title: "Лаунчер: поток мусорной телеметрии"
@@ -2099,7 +2099,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 500 отчётов с неизвестной игрой за час", value: "{{ humanize $values.A.Value }}", threshold: "больше 500, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telemetry-junk-flood", __dashboardUid__: "samoylove-chillhub", __panelId__: "999" }
+        annotations: { summary: "Больше 500 отчётов с неизвестной игрой за час", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 500, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telemetry-junk-flood", __dashboardUid__: "samoylove-chillhub", __panelId__: "999" }
 
       - uid: product-maintenance-mode-stuck
         title: "Лаунчер: режим обслуживания включён дольше получаса"
@@ -2167,7 +2167,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 20% ответов админки с кодом 5xx", value: "{{ printf \"%.0f\" $values.A.Value }}%", threshold: "больше 20%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-admin-error-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "42" }
+        annotations: { summary: "Больше 20% ответов админки с кодом 5xx", value: '{{ if $values.A }}{{ printf "%.0f" $values.A.Value }}%{{ else }}нет данных{{ end }}', threshold: "больше 20%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-admin-error-rate-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "42" }
 
       - uid: product-chillhub-client-errors-high
         title: "Лаунчер: у клиентов много ошибок"
@@ -2196,7 +2196,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 20 ошибок у клиентов лаунчера за час", value: "{{ humanize $values.A.Value }}", threshold: "больше 20, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-client-errors-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "36" }
+        annotations: { summary: "Больше 20 ошибок у клиентов лаунчера за час", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 20, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-client-errors-high", __dashboardUid__: "samoylove-chillhub", __panelId__: "36" }
 
       - uid: product-chillhub-telemetry-rate-limited
         title: "Лаунчер: телеметрию режет ограничитель"
@@ -2225,7 +2225,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Приём телеметрии отвечает 429", description: "Ограничитель частоты отбрасывает телеметрию лаунчеров (429). «Лаунчер: телеметрия отвергается» этого не видит: 429 не попадает в chillhub_telemetry_rejected_total.", value: "{{ humanize $values.A.Value }}", threshold: "больше 20, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-telemetry-rate-limited", __dashboardUid__: "samoylove-chillhub", __panelId__: "56" }
+        annotations: { summary: "Приём телеметрии отвечает 429", description: "Ограничитель частоты отбрасывает телеметрию лаунчеров (429). «Лаунчер: телеметрия отвергается» этого не видит: 429 не попадает в chillhub_telemetry_rejected_total.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 20, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-telemetry-rate-limited", __dashboardUid__: "samoylove-chillhub", __panelId__: "56" }
 
       - uid: product-chillhub-admin-login-failures
         title: "Лаунчер: подбирают пароль админки"
@@ -2254,7 +2254,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Больше 10 неудачных входов в админку за час", description: "Похоже на подбор пароля к админке лаунчера.", value: "{{ humanize $values.A.Value }}", threshold: "больше 10", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-admin-login-failures", __dashboardUid__: "samoylove-chillhub", __panelId__: "22" }
+        annotations: { summary: "Больше 10 неудачных входов в админку за час", description: "Похоже на подбор пароля к админке лаунчера.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 10", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-admin-login-failures", __dashboardUid__: "samoylove-chillhub", __panelId__: "22" }
 
       - uid: product-chillhub-integrity-check-failed
         title: "Лаунчер: проверка целостности не прошла"
@@ -2283,7 +2283,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Проверка целостности лаунчера не прошла", description: "У игрока файлы игры разошлись с манифестом.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-integrity-check-failed", __dashboardUid__: "samoylove-chillhub", __panelId__: "18" }
+        annotations: { summary: "Проверка целостности лаунчера не прошла", description: "У игрока файлы игры разошлись с манифестом.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-chillhub-integrity-check-failed", __dashboardUid__: "samoylove-chillhub", __panelId__: "18" }
 
   - orgId: 1
     name: product-status
@@ -2317,7 +2317,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Агент статус-страницы не проверял сервисы больше 10 минут", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-agent-stale", __dashboardUid__: "samoylove-status", __panelId__: "8" }
+        annotations: { summary: "Агент статус-страницы не проверял сервисы больше 10 минут", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-agent-stale", __dashboardUid__: "samoylove-status", __panelId__: "8" }
 
       - uid: product-status-bot-stale
         title: "Статус: бот Telegram молчит"
@@ -2350,7 +2350,7 @@ groups:
         # рядом (бот жив, но не достучался до Telegram) остаётся critical по
         # той же причине — разводить их по severity было бы непоследовательно.
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Бот статус-страницы не обновлял метрики больше 10 минут", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-bot-stale", __dashboardUid__: "samoylove-status", __panelId__: "17" }
+        annotations: { summary: "Бот статус-страницы не обновлял метрики больше 10 минут", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-bot-stale", __dashboardUid__: "samoylove-status", __panelId__: "17" }
 
       - uid: product-telegram-delivery-failing
         title: "Статус: бот не может отправлять сообщения"
@@ -2379,7 +2379,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: critical, area: sites }
-        annotations: { summary: "Бот статуса не отправляет сообщения: уведомления об инцидентах не придут", value: "{{ humanize $values.A.Value }}", threshold: "больше 3, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telegram-delivery-failing", __dashboardUid__: "samoylove-status", __panelId__: "18" }
+        annotations: { summary: "Бот статуса не отправляет сообщения: уведомления об инцидентах не придут", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 3, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-telegram-delivery-failing", __dashboardUid__: "samoylove-status", __panelId__: "18" }
 
       - uid: product-status-bot-restart-loop
         title: "Статус: бот перезапускается по кругу"
@@ -2408,7 +2408,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Бот статуса перезапускался больше трёх раз за час", description: "Процесс бота перезапускается по кругу: systemd поднимает его, он падает. Журнал samoylove-bot.", value: "{{ humanize $values.A.Value }}", threshold: "больше 3", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-bot-restart-loop", __dashboardUid__: "samoylove-status", __panelId__: "40" }
+        annotations: { summary: "Бот статуса перезапускался больше трёх раз за час", description: "Процесс бота перезапускается по кругу: systemd поднимает его, он падает. Журнал samoylove-bot.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 3", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-bot-restart-loop", __dashboardUid__: "samoylove-status", __panelId__: "40" }
 
       - uid: product-status-cert-renewal-missed
         title: "Статус: сертификат не продлён вовремя"
@@ -2437,7 +2437,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Сертификат не продлился на 30 днях остатка", description: "Certbot продлевает за 30 дней до конца; меньше 25 — продление сломано. Так 19.09.2026 нашёлся launcher: certbot.service падал молча месяц. Смотреть journalctl -u certbot в контейнере web.", value: "{{ humanize $values.A.Value }}", threshold: "меньше 25, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-cert-renewal-missed", __dashboardUid__: "samoylove-status", __panelId__: "14" }
+        annotations: { summary: "Сертификат не продлился на 30 днях остатка", description: "Certbot продлевает за 30 дней до конца; меньше 25 — продление сломано. Так 19.09.2026 нашёлся launcher: certbot.service падал молча месяц. Смотреть journalctl -u certbot в контейнере web.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 25, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-status-cert-renewal-missed", __dashboardUid__: "samoylove-status", __panelId__: "14" }
 
   - orgId: 1
     name: product-snakes
@@ -2500,7 +2500,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Змейки не могут записать profiles.json — прогресс теряется", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-profile-saves-failing", __dashboardUid__: "samoylove-snakes", __panelId__: "28" }
+        annotations: { summary: "Змейки не могут записать profiles.json — прогресс теряется", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-profile-saves-failing", __dashboardUid__: "samoylove-snakes", __panelId__: "28" }
 
       - uid: product-snakes-ws-errors-high
         title: "Змейки: много ошибок WebSocket"
@@ -2539,7 +2539,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Много ошибок WebSocket у игроков", value: "{{ humanize $values.A.Value }}", threshold: "больше 10, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-errors-high", __dashboardUid__: "samoylove-snakes", __panelId__: "23" }
+        annotations: { summary: "Много ошибок WebSocket у игроков", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 10, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-errors-high", __dashboardUid__: "samoylove-snakes", __panelId__: "23" }
 
       - uid: product-snakes-tick-slow
         title: "Змейки: игровой тик медленный"
@@ -2570,7 +2570,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Игровой тик медленнее нормы — игра дёргается", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 0,1 с, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-tick-slow", __dashboardUid__: "samoylove-snakes", __panelId__: "25" }
+        annotations: { summary: "Игровой тик медленнее нормы — игра дёргается", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 0,1 с, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-tick-slow", __dashboardUid__: "samoylove-snakes", __panelId__: "25" }
 
       - uid: product-snakes-tick-rate-low
         title: "Змейки: тиков в секунду мало"
@@ -2599,7 +2599,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Комнаты тикают реже нормы", description: "Сервер пропускает тики: игра идёт медленнее реального времени. «Змейки: игровой тик медленный» смотрит только на длительность тика и может молчать.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-tick-rate-low", __dashboardUid__: "samoylove-snakes", __panelId__: "38" }
+        annotations: { summary: "Комнаты тикают реже нормы", description: "Сервер пропускает тики: игра идёт медленнее реального времени. «Змейки: игровой тик медленный» смотрит только на длительность тика и может молчать.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-tick-rate-low", __dashboardUid__: "samoylove-snakes", __panelId__: "38" }
 
       - uid: product-snakes-ws-abnormal-closes
         title: "Змейки: соединения рвутся"
@@ -2628,7 +2628,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Соединения WebSocket закрываются аварийно", description: "Соединения игроков рвутся по нашей вине (паника, ошибка записи, переполнение очереди отправки) чаще раза в минуту.", value: "{{ humanize $values.A.Value }}", threshold: "больше 1, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-abnormal-closes", __dashboardUid__: "samoylove-snakes", __panelId__: "22" }
+        annotations: { summary: "Соединения WebSocket закрываются аварийно", description: "Соединения игроков рвутся по нашей вине (паника, ошибка записи, переполнение очереди отправки) чаще раза в минуту.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 1, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-abnormal-closes", __dashboardUid__: "samoylove-snakes", __panelId__: "22" }
 
       - uid: product-snakes-ws-panic
         title: "Змейки: паника в обработчике WebSocket"
@@ -2657,7 +2657,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: sites }
-        annotations: { summary: "Обработчик WebSocket падал с паникой", description: "Паника в обработчике соединения — ошибка в коде, а не нагрузка. Журнал snakes.service.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-panic", __dashboardUid__: "samoylove-snakes", __panelId__: "23" }
+        annotations: { summary: "Обработчик WebSocket падал с паникой", description: "Паника в обработчике соединения — ошибка в коде, а не нагрузка. Журнал snakes.service.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#product-snakes-ws-panic", __dashboardUid__: "samoylove-snakes", __panelId__: "23" }
 
       - uid: product-snakes-matches-stalled
         title: "Змейки: матчи идут, но не заканчиваются"
@@ -2808,7 +2808,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Больше 5% ответов сайта — пятисотки", description: "Каждый такой ответ — страница, которая у человека не открылась. Какой именно раздел ломается, видно на панели «Ошибки по разделам»: журнал nginx этого не покажет, он видит домен целиком.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-http-errors", __dashboardUid__: "samoylove-cs2", __panelId__: "109" }
+        annotations: { summary: "Больше 5% ответов сайта — пятисотки", description: "Каждый такой ответ — страница, которая у человека не открылась. Какой именно раздел ломается, видно на панели «Ошибки по разделам»: журнал nginx этого не покажет, он видит домен целиком.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 5%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-http-errors", __dashboardUid__: "samoylove-cs2", __panelId__: "109" }
       - uid: cs2-demos-expiring
         title: "Пристрелка: демки вот-вот исчезнут у Valve"
         condition: C
@@ -2836,7 +2836,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Есть матчи, у которых осталось меньше трёх дней окна хранения", description: "ЕДИНСТВЕННАЯ ТРЕВОГА ПРО БЕЗВОЗВРАТНУЮ ПОТЕРЮ. Valve держит демку около тридцати дней; не забранный сейчас матч не разобрать уже никогда — ни по просьбе игрока, ни за деньги. Проверить скачиватель: место на диске, связь с CDN, не выключен ли работник.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-demos-expiring", __dashboardUid__: "samoylove-cs2", __panelId__: "203" }
+        annotations: { summary: "Есть матчи, у которых осталось меньше трёх дней окна хранения", description: "ЕДИНСТВЕННАЯ ТРЕВОГА ПРО БЕЗВОЗВРАТНУЮ ПОТЕРЮ. Valve держит демку около тридцати дней; не забранный сейчас матч не разобрать уже никогда — ни по просьбе игрока, ни за деньги. Проверить скачиватель: место на диске, связь с CDN, не выключен ли работник.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-demos-expiring", __dashboardUid__: "samoylove-cs2", __panelId__: "203" }
       - uid: cs2-gc-down
         title: "Пристрелка: нет связи с сервером Valve"
         condition: C
@@ -2892,7 +2892,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Game Coordinator отвечает, но разобрать ответ мы не можем", description: "Так выглядит очередной апдейт CS2 — тот самый постоянный налог. Пока не починим имена полей, у всех игроков матчи стоят на стадии «найден»: счёт не приходит, демка не скачивается, разбора нет. Сырой ответ пишется в журнал целиком — по нему и правится.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-gc-unparsed", __dashboardUid__: "samoylove-cs2", __panelId__: "207" }
+        annotations: { summary: "Game Coordinator отвечает, но разобрать ответ мы не можем", description: "Так выглядит очередной апдейт CS2 — тот самый постоянный налог. Пока не починим имена полей, у всех игроков матчи стоят на стадии «найден»: счёт не приходит, демка не скачивается, разбора нет. Сырой ответ пишется в журнал целиком — по нему и правится.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-gc-unparsed", __dashboardUid__: "samoylove-cs2", __panelId__: "207" }
       - uid: cs2-downloads-failing
         title: "Пристрелка: демки не скачиваются с CDN Valve"
         condition: C
@@ -2933,7 +2933,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше трети походов за файлом кончаются обрывом связи", description: "Матчи копятся нескачанными, а окно хранения у Valve — тридцать дней: затянувшийся отказ превращается в потерю навсегда. Считается ПО ПОПЫТКАМ, а не по состоянию в базе: состояние помнит и то, что случилось месяц назад и починке не подлежит.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 30% попыток и не меньше 3 отказов за час, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-downloads-failing", __dashboardUid__: "samoylove-cs2", __panelId__: "208" }
+        annotations: { summary: "Больше трети походов за файлом кончаются обрывом связи", description: "Матчи копятся нескачанными, а окно хранения у Valve — тридцать дней: затянувшийся отказ превращается в потерю навсегда. Считается ПО ПОПЫТКАМ, а не по состоянию в базе: состояние помнит и то, что случилось месяц назад и починке не подлежит.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 30% попыток и не меньше 3 отказов за час, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-downloads-failing", __dashboardUid__: "samoylove-cs2", __panelId__: "208" }
       - uid: cs2-chain-waiting
         title: "Пристрелка: задержан разбор или отправка матча"
         condition: C
@@ -2961,7 +2961,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Самое старое дело в цепочке висит дольше двух часов", description: "Игрок доиграл, обновляет страницу и не видит разбора. Панель «Сколько ждёт игрок» показывает, на каком шаге затор: ждёт счёта — работник Game Coordinator, ждёт файла — скачиватель, ждёт разбора — воркер. Для стадии «разобран» значение — просрочка срока отправки с учётом окончания сессии, ожидания клипа и тихих часов 00–09 МСК. Нулевая просрочка при непустой очереди ночью штатна.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 2 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-waiting", __dashboardUid__: "samoylove-cs2", __panelId__: "106" }
+        annotations: { summary: "Самое старое дело в цепочке висит дольше двух часов", description: "Игрок доиграл, обновляет страницу и не видит разбора. Панель «Сколько ждёт игрок» показывает, на каком шаге затор: ждёт счёта — работник Game Coordinator, ждёт файла — скачиватель, ждёт разбора — воркер. Для стадии «разобран» значение — просрочка срока отправки с учётом окончания сессии, ожидания клипа и тихих часов 00–09 МСК. Нулевая просрочка при непустой очереди ночью штатна.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 2 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-waiting", __dashboardUid__: "samoylove-cs2", __panelId__: "106" }
       - uid: cs2-chain-stalled
         title: "Пристрелка: цепочка встала"
         condition: C
@@ -2991,7 +2991,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Коды матчей ждут счёта, а новых сводок за час не прибавилось", description: "Работа приходит и не уходит: у игроков матчи стоят на первой стадии. Ничего при этом не падает — сайт отвечает двухсотыми, ошибок в журнале нет. Ровно так поломку цепочки однажды нашёл живой игрок, а не проверка.", value: "{{ humanize $values.A.Value }}", threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-stalled", __dashboardUid__: "samoylove-cs2", __panelId__: "206" }
+        annotations: { summary: "Коды матчей ждут счёта, а новых сводок за час не прибавилось", description: "Работа приходит и не уходит: у игроков матчи стоят на первой стадии. Ничего при этом не падает — сайт отвечает двухсотыми, ошибок в журнале нет. Ровно так поломку цепочки однажды нашёл живой игрок, а не проверка.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-stalled", __dashboardUid__: "samoylove-cs2", __panelId__: "206" }
       - uid: cs2-summaries-failed
         title: "Пристрелка: коды матчей закрыты с ошибкой"
         condition: C
@@ -3019,7 +3019,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше пяти кодов закрыто с непустой причиной отказа", description: "Эти матчи в историю игрока уже не попадут: попытки исчерпаны. Разово так бывает у матчей, которых у Valve нет; растущее число означает нашу поломку — чаще всего разбор ответа GC после апдейта игры.", value: "{{ humanize $values.A.Value }}", threshold: "больше 5, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-summaries-failed", __dashboardUid__: "samoylove-cs2", __panelId__: "801" }
+        annotations: { summary: "Больше пяти кодов закрыто с непустой причиной отказа", description: "Эти матчи в историю игрока уже не попадут: попытки исчерпаны. Разово так бывает у матчей, которых у Valve нет; растущее число означает нашу поломку — чаще всего разбор ответа GC после апдейта игры.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 5, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-summaries-failed", __dashboardUid__: "samoylove-cs2", __panelId__: "801" }
       - uid: cs2-codes-rebind
         title: "Пристрелка: игроку нужно перевыпустить код Steam"
         condition: C
@@ -3047,7 +3047,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Steam отверг код аутентификации у одного из игроков", description: "У этого человека история матчей остановилась совсем: новые матчи не находятся, разбора не будет. Починить может ТОЛЬКО он сам — взять новый код на странице помощи Steam, — и, значит, сказать ему об этом должны мы.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-codes-rebind", __dashboardUid__: "samoylove-cs2", __panelId__: "205" }
+        annotations: { summary: "Steam отверг код аутентификации у одного из игроков", description: "У этого человека история матчей остановилась совсем: новые матчи не находятся, разбора не будет. Починить может ТОЛЬКО он сам — взять новый код на странице помощи Steam, — и, значит, сказать ему об этом должны мы.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-codes-rebind", __dashboardUid__: "samoylove-cs2", __panelId__: "205" }
       - uid: cs2-worker-disabled
         title: "Пристрелка: работник цепочки выключен"
         condition: C
@@ -3108,7 +3108,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Под демки осталось меньше 15 ГБ: скачиватель встанет на десяти", description: "Демки хранятся целиком и без срока — это решение, а не недосмотр, и защита пула здесь квота, а не удаление. Ниже десяти гигабайт скачиватель перестаёт начинать круги: матчи продолжат находиться, но файлы за ними приходить перестанут, а окно Valve — тридцать дней. Решать владельцу: расширить квоту ZFS или разобраться, что занимает место.", value: "{{ humanize $values.A.Value }}", threshold: "меньше 15, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-demo-storage-low", __dashboardUid__: "samoylove-cs2", __panelId__: "702" }
+        annotations: { summary: "Под демки осталось меньше 15 ГБ: скачиватель встанет на десяти", description: "Демки хранятся целиком и без срока — это решение, а не недосмотр, и защита пула здесь квота, а не удаление. Ниже десяти гигабайт скачиватель перестаёт начинать круги: матчи продолжат находиться, но файлы за ними приходить перестанут, а окно Valve — тридцать дней. Решать владельцу: расширить квоту ZFS или разобраться, что занимает место.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 15, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-demo-storage-low", __dashboardUid__: "samoylove-cs2", __panelId__: "702" }
       - uid: cs2-demo-storage-forecast
         title: "Пристрелка: места под демки хватит меньше чем на две недели"
         condition: C
@@ -3190,7 +3190,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Работник {{ $labels.worker }} шесть часов не сделал ни одного дела, хотя его ждут дела", description: "Работник запущен, очередь у него непустая (cs2_worker_backlog), а следов работы в базе шесть часов нет: круг падает молча. Для игрока это затор в цепочке без единой ошибки в журнале. Тишина при пустой очереди — норма (никто не играл) и тревогой не считается: до 11.09.2026 правило этого не различало и горело весь вечер. Очередь при этом должна быть непустой все шесть часов: дела, появившиеся после тихой ночи, работник ещё не обязан был сделать (с 27.09.2026). Доставка исключена: сводки штатно ждут окончания сессии, клипа и тихих часов. Её задержку проверяет cs2-chain-waiting по просроченному сроку отправки, а не времени последней отправки.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
+        annotations: { summary: "Работник {{ $labels.worker }} шесть часов не сделал ни одного дела, хотя его ждут дела", description: "Работник запущен, очередь у него непустая (cs2_worker_backlog), а следов работы в базе шесть часов нет: круг падает молча. Для игрока это затор в цепочке без единой ошибки в журнале. Тишина при пустой очереди — норма (никто не играл) и тревогой не считается: до 11.09.2026 правило этого не различало и горело весь вечер. Очередь при этом должна быть непустой все шесть часов: дела, появившиеся после тихой ночи, работник ещё не обязан был сделать (с 27.09.2026). Доставка исключена: сводки штатно ждут окончания сессии, клипа и тихих часов. Её задержку проверяет cs2-chain-waiting по просроченному сроку отправки, а не времени последней отправки.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
       - uid: cs2-worker-mark-silent
         title: "Пристрелка: фоновый работник молчит"
         condition: C
@@ -3250,7 +3250,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Работник {{ $labels.worker }} давно не отметил ни одного удачного круга", description: "Сайт отвечает, но данные этого работника перестали свежеть: блокировки, уровни и профили — наблюдения о встреченных и профили игроков; faceit — ELO на профилях; друзья — матчи через бота в друзьях приходят только кругом кодов, с опозданием; пересчёт — старые числа на страницах после смены разбора; аватары — кэш аватаров растёт без уборки. Смотреть журнал cs2-chain (у аватаров — cs2-api) по имени работника: круг падает молча или обрывается отказом чужой стороны.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-mark-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
+        annotations: { summary: "Работник {{ $labels.worker }} давно не отметил ни одного удачного круга", description: "Сайт отвечает, но данные этого работника перестали свежеть: блокировки, уровни и профили — наблюдения о встреченных и профили игроков; faceit — ELO на профилях; друзья — матчи через бота в друзьях приходят только кругом кодов, с опозданием; пересчёт — старые числа на страницах после смены разбора; аватары — кэш аватаров растёт без уборки. Смотреть журнал cs2-chain (у аватаров — cs2-api) по имени работника: круг падает молча или обрывается отказом чужой стороны.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-mark-silent", __dashboardUid__: "samoylove-cs2", __panelId__: "401" }
       - uid: cs2-worker-mark-absent
         title: "Пристрелка: запущенный работник ни разу не отметился"
         condition: C
@@ -3317,7 +3317,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Очередь разбора не убывает, а разборов не происходит вовсе", description: "Демки лежат, разбора нет ни у кого: у игрока страница матча вечно показывает «разбирается». Обычная причина — обновление игры сломало парсер; вторая — воркеры не поднялись после выкатки. Отказ выглядит как тишина, а не как ошибка.", value: "{{ humanize $values.A.Value }}", threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-queue-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "300" }
+        annotations: { summary: "Очередь разбора не убывает, а разборов не происходит вовсе", description: "Демки лежат, разбора нет ни у кого: у игрока страница матча вечно показывает «разбирается». Обычная причина — обновление игры сломало парсер; вторая — воркеры не поднялись после выкатки. Отказ выглядит как тишина, а не как ошибка.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-queue-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "300" }
       - uid: cs2-parse-failures
         title: "Пристрелка: разбор падает у каждого пятого матча"
         condition: C
@@ -3345,7 +3345,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше 20% разборов кончаются ошибкой", description: "Каждый пятый игрок вместо отчёта видит «разбор не удался». Отдельная и худшая причина — потеря синхронизации парсера с битовым потоком: такой матч не падает, а отдаёт правдоподобные, но неверные числа, поэтому расхождение считается отказом намеренно.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 500%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-failures", __dashboardUid__: "samoylove-cs2", __panelId__: "307" }
+        annotations: { summary: "Больше 20% разборов кончаются ошибкой", description: "Каждый пятый игрок вместо отчёта видит «разбор не удался». Отдельная и худшая причина — потеря синхронизации парсера с битовым потоком: такой матч не падает, а отдаёт правдоподобные, но неверные числа, поэтому расхождение считается отказом намеренно.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 500%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-failures", __dashboardUid__: "samoylove-cs2", __panelId__: "307" }
       - uid: cs2-parse-slow
         title: "Пристрелка: разбор идёт дольше двух минут"
         condition: C
@@ -3373,7 +3373,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "p95 времени разбора перевалил за две минуты", description: "Сервис обещает разбор «под минуту»: человек, приславший демку, за две минуты обычно уходит со страницы. Смотреть, кто из двух парсеров стал узким местом, и не мешает ли разбору пересчёт архива.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "не короче 5 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "306" }
+        annotations: { summary: "p95 времени разбора перевалил за две минуты", description: "Сервис обещает разбор «под минуту»: человек, приславший демку, за две минуты обычно уходит со страницы. Смотреть, кто из двух парсеров стал узким местом, и не мешает ли разбору пересчёт архива.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не короче 5 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "306" }
       - uid: cs2-outdated
         title: "Пристрелка: архив разобран старым составом данных"
         condition: C
@@ -3401,7 +3401,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Есть матчи, разобранные устаревшей версией состава данных", description: "Метрики считаются по всему архиву сразу, поэтому половина матчей по-старому — это числа, которые между собой несопоставимы, при совершенно целом на вид сайте. Работник пересчёта должен разгребать это сам; не убывает — значит он не идёт.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-outdated", __dashboardUid__: "samoylove-cs2", __panelId__: "303" }
+        annotations: { summary: "Есть матчи, разобранные устаревшей версией состава данных", description: "Метрики считаются по всему архиву сразу, поэтому половина матчей по-старому — это числа, которые между собой несопоставимы, при совершенно целом на вид сайте. Работник пересчёта должен разгребать это сам; не убывает — значит он не идёт.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-outdated", __dashboardUid__: "samoylove-cs2", __panelId__: "303" }
       - uid: cs2-upload-broken
         title: "Пристрелка: загрузка демок отказывает по нашей вине"
         condition: C
@@ -3429,7 +3429,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Приём демки упал не из-за файла, а из-за нас: диск или база", description: "Это единственное место, где отказ человек видит СРАЗУ — и обычно уходит. Для матчей старше тридцати дней и демок с площадок загрузка руками не запасной путь, а единственный.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-upload-broken", __dashboardUid__: "samoylove-cs2", __panelId__: "602" }
+        annotations: { summary: "Приём демки упал не из-за файла, а из-за нас: диск или база", description: "Это единственное место, где отказ человек видит СРАЗУ — и обычно уходит. Для матчей старше тридцати дней и демок с площадок загрузка руками не запасной путь, а единственный.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-upload-broken", __dashboardUid__: "samoylove-cs2", __panelId__: "602" }
       - uid: cs2-steam-key-rejected
         title: "Пристрелка: Steam отклонил наш ключ"
         condition: C
@@ -3457,7 +3457,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Steam Web API отвечает «ключ недействителен»", description: "Условия Valve разрешают отозвать ключ без предупреждения и без объяснения — это не поломка, а сторона договора. Для игроков это значит: история матчей не пополняется, ники и аватары застыли. Сервис обязан пережить это как временную недоступность, страницы отдают то, что уже собрано.", value: "{{ humanize $values.A.Value }}", threshold: "больше 3, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-key-rejected", __dashboardUid__: "samoylove-cs2", __panelId__: "502" }
+        annotations: { summary: "Steam Web API отвечает «ключ недействителен»", description: "Условия Valve разрешают отозвать ключ без предупреждения и без объяснения — это не поломка, а сторона договора. Для игроков это значит: история матчей не пополняется, ники и аватары застыли. Сервис обязан пережить это как временную недоступность, страницы отдают то, что уже собрано.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 3, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-key-rejected", __dashboardUid__: "samoylove-cs2", __panelId__: "502" }
       - uid: cs2-steam-quota
         title: "Пристрелка: суточный потолок Steam почти выеден"
         condition: C
@@ -3485,7 +3485,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "За сутки израсходовано больше 80% из 100 000 вызовов ключа", description: "Упереться в потолок значит остановить У ВСЕХ и историю матчей, и профили, а выглядеть это будет как отказ Steam. Пятиминутный обход историй стоит 288 вызовов в сутки на игрока: примерно на трёхстах сорока игроках ключ выедается целиком, и обход обязан стать разным для активных и спящих.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 80%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-quota", __dashboardUid__: "samoylove-cs2", __panelId__: "510" }
+        annotations: { summary: "За сутки израсходовано больше 80% из 100 000 вызовов ключа", description: "Упереться в потолок значит остановить У ВСЕХ и историю матчей, и профили, а выглядеть это будет как отказ Steam. Пятиминутный обход историй стоит 288 вызовов в сутки на игрока: примерно на трёхстах сорока игроках ключ выедается целиком, и обход обязан стать разным для активных и спящих.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 80%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-quota", __dashboardUid__: "samoylove-cs2", __panelId__: "510" }
       - uid: cs2-profiles-stale
         title: "Пристрелка: накопились устаревшие профили Steam"
         condition: C
@@ -3513,7 +3513,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше 50 профилей Steam не обновлялись дольше восьми суток", description: "Это возраст сохранённых ников и аватаров, а не доказательство остановки сборщика. Сначала сравнить с последним успешным циклом профилей и ответами GetPlayerSummaries. Если цикл свежий и ответы успешны, проверить охват: фоновый сбор выбирает участников последних матчей, а метрика считает все сохранённые профили, включая друзей и старый архив. Если цикл молчит — проверить журнал cs2-chain, доступность Steam и бюджет ключа. Порог не скрывает устаревшие данные при работающем сборе.", value: "{{ humanize $values.A.Value }}", threshold: "больше 50, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-profiles-stale", __dashboardUid__: "samoylove-cs2", __panelId__: "504" }
+        annotations: { summary: "Больше 50 профилей Steam не обновлялись дольше восьми суток", description: "Это возраст сохранённых ников и аватаров, а не доказательство остановки сборщика. Сначала сравнить с последним успешным циклом профилей и ответами GetPlayerSummaries. Если цикл свежий и ответы успешны, проверить охват: фоновый сбор выбирает участников последних матчей, а метрика считает все сохранённые профили, включая друзей и старый архив. Если цикл молчит — проверить журнал cs2-chain, доступность Steam и бюджет ключа. Порог не скрывает устаревшие данные при работающем сборе.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 50, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-profiles-stale", __dashboardUid__: "samoylove-cs2", __panelId__: "504" }
       - uid: cs2-telegram-down
         title: "Пристрелка: бот Telegram не отвечает"
         condition: C
@@ -3573,7 +3573,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше пятой части аватаров не отдаётся", description: "Вместо лиц на страницах серые кружки; сама страница при этом целая, и без этой тревоги мы бы не узнали вовсе. «нет_аватара» сюда не входит: это не отказ, а человек без картинки в Steam.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 500%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-avatars-failing", __dashboardUid__: "samoylove-cs2", __panelId__: "1803" }
+        annotations: { summary: "Больше пятой части аватаров не отдаётся", description: "Вместо лиц на страницах серые кружки; сама страница при этом целая, и без этой тревоги мы бы не узнали вовсе. «нет_аватара» сюда не входит: это не отказ, а человек без картинки в Steam.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 500%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-avatars-failing", __dashboardUid__: "samoylove-cs2", __panelId__: "1803" }
       - uid: cs2-page-slow
         title: "Пристрелка: страница матча стала медленной"
         condition: C
@@ -3601,7 +3601,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "p95 страницы матча перевалил за три секунды", description: "Разбор считается по ClickHouse на лету, поэтому медленно здесь — это медленно у человека, открывшего свой матч. Смотреть запросы отчёта и объём архива, а не «сайт тормозит»: остальные разделы могут быть быстрыми.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 3 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-page-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "108" }
+        annotations: { summary: "p95 страницы матча перевалил за три секунды", description: "Разбор считается по ClickHouse на лету, поэтому медленно здесь — это медленно у человека, открывшего свой матч. Смотреть запросы отчёта и объём архива, а не «сайт тормозит»: остальные разделы могут быть быстрыми.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 3 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-page-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "108" }
       - uid: cs2-storage-warn
         title: "Пристрелка: хранилище демок заполняется"
         condition: C
@@ -3629,7 +3629,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Занято больше 70% квоты хранилища демок", description: "Ретеншна нет намеренно: демки хранятся целиком, и место когда-нибудь кончится. Знать об этом надо заранее — расширить квоту или заняться оптимизацией хранения, — а не в тот день, когда приём встанет.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 70%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-storage-warn", __dashboardUid__: "samoylove-cs2", __panelId__: "701" }
+        annotations: { summary: "Занято больше 70% квоты хранилища демок", description: "Ретеншна нет намеренно: демки хранятся целиком, и место когда-нибудь кончится. Знать об этом надо заранее — расширить квоту или заняться оптимизацией хранения, — а не в тот день, когда приём встанет.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 70%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-storage-warn", __dashboardUid__: "samoylove-cs2", __panelId__: "701" }
       - uid: cs2-storage-crit
         title: "Пристрелка: хранилище демок почти полное"
         condition: C
@@ -3657,7 +3657,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Занято больше 85% квоты хранилища демок", description: "Скачиватель уже останавливает круги, когда остаётся меньше десяти гигабайт: новые матчи перестают забираться, а окно у Valve — тридцать дней. Загрузка руками тоже начнёт отказывать. Место кончается тихо и сразу у всех, включая временные файлы разбора.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 85%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-storage-crit", __dashboardUid__: "samoylove-cs2", __panelId__: "701" }
+        annotations: { summary: "Занято больше 85% квоты хранилища демок", description: "Скачиватель уже останавливает круги, когда остаётся меньше десяти гигабайт: новые матчи перестают забираться, а окно у Valve — тридцать дней. Загрузка руками тоже начнёт отказывать. Место кончается тихо и сразу у всех, включая временные файлы разбора.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 85%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-storage-crit", __dashboardUid__: "samoylove-cs2", __panelId__: "701" }
       # --- Рендер клипов (план cs2 29Д). Очередь лежит в той же базе, что и
       # всё остальное, и метрики по ней считает cs2-api, а не сам работник в
       # контейнере cs2-render: у того своей мишени сборщика нет.
@@ -3749,7 +3749,7 @@ groups:
         annotations:
           summary: На машине {{ $labels.engine }} осталось меньше 10 ГиБ
           description: Метрика берёт минимум по каталогам клипов, работы и кэша. Проверить конкретный диск, рабочие файлы и сроки хранения. Ниже 2 ГиБ новые задания не берутся; память машины не увеличивать.
-          value: '{{ humanize1024 $values.A.Value }}Б'
+          value: '{{ if $values.A }}{{ humanize1024 $values.A.Value }}Б{{ else }}нет данных{{ end }}'
           threshold: меньше 10 ГиБ 10 минут
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-disk-low
           __dashboardUid__: samoylove-cs2
@@ -3783,7 +3783,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "За час провалилось три и больше заданий рендера", description: "Завершённые отказы пользовательских и автоматических заказов за час из render_history, отдельно по машине. Удаление или повтор render_jobs не вычитает уже случившиеся ошибки. Диагностические прогоны видны отдельно на дашборде и не входят в эту тревогу. Проверить классы ошибок и очередь машины; историю не удалять.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 3, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-failed", __dashboardUid__: "samoylove-cs2", __panelId__: "1702" }
+        annotations: { summary: "За час провалилось три и больше заданий рендера", description: "Завершённые отказы пользовательских и автоматических заказов за час из render_history, отдельно по машине. Удаление или повтор render_jobs не вычитает уже случившиеся ошибки. Диагностические прогоны видны отдельно на дашборде и не входят в эту тревогу. Проверить классы ошибок и очередь машины; историю не удалять.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 3, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-failed", __dashboardUid__: "samoylove-cs2", __panelId__: "1702" }
       - uid: cs2-render-stalled
         title: "Пристрелка: заказ клипа ждёт больше получаса"
         condition: C
@@ -3815,7 +3815,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Заказ клипа человека ждёт машину {{ $labels.engine }} дольше получаса", description: "Человек заказал клип и ждёт. Считаются только заказы, которые можно взять прямо сейчас: без ждущих повтора и заданий сломанного движка, без промо. Смотреть «Машины рендера: отметка» — жива ли машина, и «Рендер: очередь по машинам».", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 30 мин, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-stalled", __dashboardUid__: "samoylove-cs2", __panelId__: "1603" }
+        annotations: { summary: "Заказ клипа человека ждёт машину {{ $labels.engine }} дольше получаса", description: "Человек заказал клип и ждёт. Считаются только заказы, которые можно взять прямо сейчас: без ждущих повтора и заданий сломанного движка, без промо. Смотреть «Машины рендера: отметка» — жива ли машина, и «Рендер: очередь по машинам».", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 30 мин, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-stalled", __dashboardUid__: "samoylove-cs2", __panelId__: "1603" }
       - uid: cs2-render-promo-late
         title: "Пристрелка: промо не успевает к сводке неделю подряд"
         condition: C
@@ -3852,7 +3852,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Неделю подряд больше 5% промо снимаются уже после сводки сессии", description: "Опоздавшее промо в Telegram не уходит: человек получает сводку без ролика. Две машины не справляются с вечерним пиком — пора третья (КОНСТРУКТОР-РОЛИКОВ, «Мощность рендера»). Сначала глянуть «Ожидание по классам» и «Машины рендера: отметка»: если одна машина всю неделю молчала, дело не в мощности.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 12000%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-promo-late", __dashboardUid__: "samoylove-cs2", __panelId__: "1604" }
+        annotations: { summary: "Неделю подряд больше 5% промо снимаются уже после сводки сессии", description: "Опоздавшее промо в Telegram не уходит: человек получает сводку без ролика. Две машины не справляются с вечерним пиком — пора третья (КОНСТРУКТОР-РОЛИКОВ, «Мощность рендера»). Сначала глянуть «Ожидание по классам» и «Машины рендера: отметка»: если одна машина всю неделю молчала, дело не в мощности.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 12000%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-promo-late", __dashboardUid__: "samoylove-cs2", __panelId__: "1604" }
       - uid: cs2-clip-storage-low
         title: "Пристрелка: место под клипы кончается"
         condition: C
@@ -3883,7 +3883,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Под клипы осталось меньше 4 ГБ: работник рендера встанет на двух", description: "Клипы стираются сами через месяц без обращений, так что это либо всплеск заказов, либо сироты — каталоги без записи в реестре (панель «Клипы: занято» покажет расхождение). Ниже двух гигабайт заказы перестают браться, и у людей клип «готовится» бесконечно. Решать владельцу: расширить квоту ZFS датасета tank/cs2-clips или укоротить срок жизни CS2_RENDER_CLIP_TTL.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-clip-storage-low", __dashboardUid__: "samoylove-cs2", __panelId__: "908" }
+        annotations: { summary: "Под клипы осталось меньше 4 ГБ: работник рендера встанет на двух", description: "Клипы стираются сами через месяц без обращений, так что это либо всплеск заказов, либо сироты — каталоги без записи в реестре (панель «Клипы: занято» покажет расхождение). Ниже двух гигабайт заказы перестают браться, и у людей клип «готовится» бесконечно. Решать владельцу: расширить квоту ZFS датасета tank/cs2-clips или укоротить срок жизни CS2_RENDER_CLIP_TTL.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-clip-storage-low", __dashboardUid__: "samoylove-cs2", __panelId__: "908" }
       # --- Здоровье машин рендера (ревью мощности 23.09.2026). Метрики по
       # машинам несут метку engine (linux, hlae), и выражения её не сводят:
       # тревога приходит отдельно по каждой машине, потому что чинятся они
@@ -3918,7 +3918,7 @@ groups:
         execErrState: Error
         for: 24h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Меньше 90% заданий рендера за неделю прошли с первой попытки (машина — метка engine)", description: "Клипы в итоге доходят, но каждый повтор — лишние минуты, пока игрок ждёт. Какая причина выросла, видно в cs2_render_retries_by_requester_week по той же машине и классу заказов (панель «Рендер с первого раза: причины повторов»): перемотка, камера, падение игры, HLAE, диск, потолок времени (timeout). Частый повод — обновление CS2 или выкатка посреди задания.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "меньше 90%, держится 1 сут", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-first-try-low", __dashboardUid__: "samoylove-cs2", __panelId__: "910" }
+        annotations: { summary: "Меньше 90% заданий рендера за неделю прошли с первой попытки (машина — метка engine)", description: "Клипы в итоге доходят, но каждый повтор — лишние минуты, пока игрок ждёт. Какая причина выросла, видно в cs2_render_retries_by_requester_week по той же машине и классу заказов (панель «Рендер с первого раза: причины повторов»): перемотка, камера, падение игры, HLAE, диск, потолок времени (timeout). Частый повод — обновление CS2 или выкатка посреди задания.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 90%, держится 1 сут", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-first-try-low", __dashboardUid__: "samoylove-cs2", __panelId__: "910" }
       - uid: cs2-render-engine-broken
         title: "Пристрелка: движок съёмки сломан"
         condition: C
@@ -3980,7 +3980,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "На машине рендера меньше 10 ГиБ свободного места (машина — метка engine)", description: "Ниже 8 ГиБ в каталоге клипов сборщик начнёт стирать клипы раньше срока, ниже 2 ГиБ где угодно машина перестанет брать задания, и клипов не получит никто. На cs2-win смотреть оба диска: Z: (клипы) и C: (дорожки, кэш демок). Это не квота датасета tank/cs2-clips — про неё отдельная тревога «место под клипы кончается».", value: "{{ humanize1024 $values.A.Value }}Б", threshold: "меньше 10 ГиБ, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-machine-space-low", __dashboardUid__: "samoylove-cs2", __panelId__: "912" }
+        annotations: { summary: "На машине рендера меньше 10 ГиБ свободного места (машина — метка engine)", description: "Ниже 8 ГиБ в каталоге клипов сборщик начнёт стирать клипы раньше срока, ниже 2 ГиБ где угодно машина перестанет брать задания, и клипов не получит никто. На cs2-win смотреть оба диска: Z: (клипы) и C: (дорожки, кэш демок). Это не квота датасета tank/cs2-clips — про неё отдельная тревога «место под клипы кончается».", value: '{{ if $values.A }}{{ humanize1024 $values.A.Value }}Б{{ else }}нет данных{{ end }}', threshold: "меньше 10 ГиБ, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-machine-space-low", __dashboardUid__: "samoylove-cs2", __panelId__: "912" }
       - uid: cs2-render-hlae-update
         title: "Пристрелка: вышла новая версия HLAE"
         condition: C
@@ -4042,7 +4042,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Steam ждёт поставить обновление CS2 на машине рендера (машина — метка engine)", description: "Пока оно не встало, новые демки не читаются старой игрой, а новая HLAE, собранная под новую игру, её не поднимает. На cs2-win: мягко остановить работника (C:\\cs2\\stop-render.ps1), запустить CS2 через Steam разовой задачей в сеансе render (steam://run/730), дождаться, когда buildid в appmanifest_730.acf сравняется с TargetBuildID, погасить игру и запустить задачу cs2-render — проба при старте проверит движок. Если HLAE под новую игру ещё нет, проба упадёт, и заказы уйдут на Linux. На Linux — смотреть клиент Steam в cs2-render. Карточка машины в админке cs2 пишет, какая сборка ждёт.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 3 ч, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-game-update-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "911" }
+        annotations: { summary: "Steam ждёт поставить обновление CS2 на машине рендера (машина — метка engine)", description: "Пока оно не встало, новые демки не читаются старой игрой, а новая HLAE, собранная под новую игру, её не поднимает. На cs2-win: мягко остановить работника (C:\\cs2\\stop-render.ps1), запустить CS2 через Steam разовой задачей в сеансе render (steam://run/730), дождаться, когда buildid в appmanifest_730.acf сравняется с TargetBuildID, погасить игру и запустить задачу cs2-render — проба при старте проверит движок. Если HLAE под новую игру ещё нет, проба упадёт, и заказы уйдут на Linux. На Linux — смотреть клиент Steam в cs2-render. Карточка машины в админке cs2 пишет, какая сборка ждёт.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 3 ч, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-game-update-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "911" }
 
       - uid: cs2-chain-no-leader
         title: "Пристрелка: цепочку никто не ведёт"
@@ -4100,7 +4100,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Сайт не может снять метрики процесса цепочки", description: "Числа работников на дашборде становятся нулями сайта, и часть тревог про цепочку врёт. Проверить, жив ли cs2-chain и отвечает ли его порт метрик.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "меньше 50%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-scrape-down", __dashboardUid__: "samoylove-cs2", __panelId__: "407" }
+        annotations: { summary: "Сайт не может снять метрики процесса цепочки", description: "Числа работников на дашборде становятся нулями сайта, и часть тревог про цепочку врёт. Проверить, жив ли cs2-chain и отвечает ли его порт метрик.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "меньше 50%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-chain-scrape-down", __dashboardUid__: "samoylove-cs2", __panelId__: "407" }
 
       - uid: cs2-worker-panics
         title: "Пристрелка: работник падает с паникой"
@@ -4129,7 +4129,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Работник цепочки паникует", description: "Работник ловит панику и перезапускается — задание, на котором он падает, не пройдёт никогда. Порог 2, а не 1: сумма счётчиков сайта и цепочки даёт ложный прирост при выкатке. Журнал cs2-chain, строка с паникой.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 2", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-panics", __dashboardUid__: "samoylove-cs2", __panelId__: "408" }
+        annotations: { summary: "Работник цепочки паникует", description: "Работник ловит панику и перезапускается — задание, на котором он падает, не пройдёт никогда. Порог 2, а не 1: сумма счётчиков сайта и цепочки даёт ложный прирост при выкатке. Журнал cs2-chain, строка с паникой.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 2", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-worker-panics", __dashboardUid__: "samoylove-cs2", __panelId__: "408" }
 
       - uid: cs2-reports-behind
         title: "Пристрелка: документы отчёта не догоняют"
@@ -4158,7 +4158,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Пересчёт документов отчёта встал", description: "Страницы матчей считаются на лету и медленнее, пока документы устаревшие. Проверить работника пересчёта.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reports-behind", __dashboardUid__: "samoylove-cs2", __panelId__: "309" }
+        annotations: { summary: "Пересчёт документов отчёта встал", description: "Страницы матчей считаются на лету и медленнее, пока документы устаревшие. Проверить работника пересчёта.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reports-behind", __dashboardUid__: "samoylove-cs2", __panelId__: "309" }
 
       - uid: cs2-steam-rate
         title: "Пристрелка: ключ Steam упирается в темп"
@@ -4187,7 +4187,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Вызовы Steam идут на пределе частоты", description: "Страницы ждут Steam: фоновый сбор занял почти весь темп ключа. Смотреть расход по работникам на дашборде cs2.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 90%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-rate", __dashboardUid__: "samoylove-cs2", __panelId__: "510" }
+        annotations: { summary: "Вызовы Steam идут на пределе частоты", description: "Страницы ждут Steam: фоновый сбор занял почти весь темп ключа. Смотреть расход по работникам на дашборде cs2.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 90%, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-steam-rate", __dashboardUid__: "samoylove-cs2", __panelId__: "510" }
 
       - uid: cs2-admin-login-bruteforce
         title: "Пристрелка: кто-то подбирает пароль админки"
@@ -4219,7 +4219,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Кто-то подбирает пароль админки cs2", description: "За 15 минут пять и больше неверных паролей к /admin или попытка при уже закрытом входе. Если это не ты — кто-то перебирает пароль владельца: вход сам закрыт на 15 минут, но стоит посмотреть журнал cs2-api и журнал nginx и сменить пароль.", value: "{{ humanize $values.A.Value }}", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-admin-login-bruteforce", __dashboardUid__: "samoylove-cs2", __panelId__: "1202" }
+        annotations: { summary: "Кто-то подбирает пароль админки cs2", description: "За 15 минут пять и больше неверных паролей к /admin или попытка при уже закрытом входе. Если это не ты — кто-то перебирает пароль владельца: вход сам закрыт на 15 минут, но стоит посмотреть журнал cs2-api и журнал nginx и сменить пароль.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-admin-login-bruteforce", __dashboardUid__: "samoylove-cs2", __panelId__: "1202" }
 
       # --- Сохранность данных, базы и машины рендера ----------------------
       # Метрики появились в cs2 25.09.2026. До выкатки сервиса их рядов нет,
@@ -4252,7 +4252,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: critical, area: cs2 }
-        annotations: { summary: "Разборы откладываются больше часа: ClickHouse не принимает запись", description: "Свежие матчи не появляются ни на сайте, ни в боте. Задания при этом не пропадают: каждое ждёт и пробует снова. Смотреть ClickHouse в контейнере cs2: жив ли, есть ли место, нет ли TOO_MANY_PARTS в журнале cs2-chain.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-postponed", __dashboardUid__: "samoylove-cs2", __panelId__: "1502" }
+        annotations: { summary: "Разборы откладываются больше часа: ClickHouse не принимает запись", description: "Свежие матчи не появляются ни на сайте, ни в боте. Задания при этом не пропадают: каждое ждёт и пробует снова. Смотреть ClickHouse в контейнере cs2: жив ли, есть ли место, нет ли TOO_MANY_PARTS в журнале cs2-chain.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-postponed", __dashboardUid__: "samoylove-cs2", __panelId__: "1502" }
 
       - uid: cs2-parse-failed-seen
         title: "Пристрелка: упавшие разборы спрятали матчи"
@@ -4281,7 +4281,7 @@ groups:
         execErrState: Error
         for: 6h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Есть упавшие разборы уже виденных матчей", description: "Человек этот матч уже видел, а теперь он пропал со страниц: перезапись стёрла старые строки и не записала новые. Сам матч не вернётся, пока разбор не пройдёт. Причину искать в parse_jobs.error у упавших заданий.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-failed-seen", __dashboardUid__: "samoylove-cs2", __panelId__: "1503" }
+        annotations: { summary: "Есть упавшие разборы уже виденных матчей", description: "Человек этот матч уже видел, а теперь он пропал со страниц: перезапись стёрла старые строки и не записала новые. Сам матч не вернётся, пока разбор не пройдёт. Причину искать в parse_jobs.error у упавших заданий.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 6 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-failed-seen", __dashboardUid__: "samoylove-cs2", __panelId__: "1503" }
 
       - uid: cs2-parse-deleting-stuck
         title: "Пристрелка: удаление матча застряло"
@@ -4310,7 +4310,7 @@ groups:
         execErrState: Error
         for: 2h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Удаление матча оборвалось и не доделано", description: "Данные, которые человек просил стереть, всё ещё лежат. Подметальщик не справился за час: смотреть журнал cs2-chain (recheck) и доделывать руками.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 2 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-deleting-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "1504" }
+        annotations: { summary: "Удаление матча оборвалось и не доделано", description: "Данные, которые человек просил стереть, всё ещё лежат. Подметальщик не справился за час: смотреть журнал cs2-chain (recheck) и доделывать руками.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 2 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-parse-deleting-stuck", __dashboardUid__: "samoylove-cs2", __panelId__: "1504" }
 
       - uid: cs2-reconcile-mismatch
         title: "Пристрелка: базы и диск разошлись"
@@ -4342,7 +4342,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Ночная сверка нашла расхождение баз и диска (вид — метка kind)", description: "Сверка только считает, удалять данные без человека ей нельзя. clickhouse_orphan — строки матча без задания, file_orphan — файл демки без записи, row_no_file — запись без файла, то есть демку уже не перечитать. Разбирать руками, начиная с row_no_file.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-mismatch", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
+        annotations: { summary: "Ночная сверка нашла расхождение баз и диска (вид — метка kind)", description: "Сверка только считает, удалять данные без человека ей нельзя. clickhouse_orphan — строки матча без задания, file_orphan — файл демки без записи, row_no_file — запись без файла, то есть демку уже не перечитать. Разбирать руками, начиная с row_no_file.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-mismatch", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
 
       - uid: cs2-reconcile-parse-missing
         title: "Пристрелка: много матчей без строк в ClickHouse"
@@ -4371,7 +4371,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Больше десяти матчей помечены разобранными, а строк у них нет", description: "Сверка сама ставит их на разбор заново, но пока разбор не пройдёт, у людей пустые страницы матчей. Один-два — случайность, десяток — ClickHouse терял запись. Проверить, что повторные разборы проходят, и искать, куда делись строки.", value: "{{ humanize $values.A.Value }}", threshold: "больше 10, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-parse-missing", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
+        annotations: { summary: "Больше десяти матчей помечены разобранными, а строк у них нет", description: "Сверка сама ставит их на разбор заново, но пока разбор не пройдёт, у людей пустые страницы матчей. Один-два — случайность, десяток — ClickHouse терял запись. Проверить, что повторные разборы проходят, и искать, куда делись строки.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 10, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-parse-missing", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
 
       - uid: cs2-reconcile-summary
         title: "Пристрелка: разбор разошёлся со сводкой Valve"
@@ -4405,7 +4405,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Ночная сверка нашла матчи, где разбор не совпал со сводкой Valve", description: "У людей на страницах матча не те убийства, смерти или счёт, что показывает сама игра. Обычная причина — обновление CS2 или свежая выкатка разбора. Первые двадцать расхождений (матч, номер GC, SteamID, два числа) — в журнале cs2-chain у recheck; сверить с демкой и чинить разбор, данные сами не правятся.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-summary", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
+        annotations: { summary: "Ночная сверка нашла матчи, где разбор не совпал со сводкой Valve", description: "У людей на страницах матча не те убийства, смерти или счёт, что показывает сама игра. Обычная причина — обновление CS2 или свежая выкатка разбора. Первые двадцать расхождений (матч, номер GC, SteamID, два числа) — в журнале cs2-chain у recheck; сверить с демкой и чинить разбор, данные сами не правятся.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-reconcile-summary", __dashboardUid__: "samoylove-cs2", __panelId__: "1505" }
 
       - uid: cs2-pg-dump-old
         title: "Пристрелка: дамп Postgres давно не снимался"
@@ -4438,7 +4438,7 @@ groups:
         execErrState: Error
         for: 30m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Последний удачный дамп Postgres старше 26 часов", description: "Дамп снимается каждый день, значит, вчерашний не удался. Если сейчас потерять базу, пропадут учётные записи, коды и очередь с последнего дампа. Смотреть cs2-pgdump в контейнере cs2: таймер, журнал, место под дампы.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 26 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pg-dump-old", __dashboardUid__: "samoylove-cs2", __panelId__: "1501" }
+        annotations: { summary: "Последний удачный дамп Postgres старше 26 часов", description: "Дамп снимается каждый день, значит, вчерашний не удался. Если сейчас потерять базу, пропадут учётные записи, коды и очередь с последнего дампа. Смотреть cs2-pgdump в контейнере cs2: таймер, журнал, место под дампы.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 26 ч, держится 30 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pg-dump-old", __dashboardUid__: "samoylove-cs2", __panelId__: "1501" }
 
       - uid: cs2-pg-dump-absent
         title: "Пристрелка: отметки дампа Postgres нет"
@@ -4499,7 +4499,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Занято больше 80% соединений Postgres", description: "Когда кончатся все, запросы сайта и цепочки начнут падать с ошибкой: страницы не откроются, разбор встанет. Смотреть pg_stat_activity: кто держит соединения и не утекают ли они.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 80%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pg-connections", __dashboardUid__: "samoylove-cs2", __panelId__: "2000" }
+        annotations: { summary: "Занято больше 80% соединений Postgres", description: "Когда кончатся все, запросы сайта и цепочки начнут падать с ошибкой: страницы не откроются, разбор встанет. Смотреть pg_stat_activity: кто держит соединения и не утекают ли они.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 80%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pg-connections", __dashboardUid__: "samoylove-cs2", __panelId__: "2000" }
 
       - uid: cs2-clickhouse-parts
         title: "Пристрелка: куски ClickHouse копятся"
@@ -4528,7 +4528,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "В одной партиции ClickHouse больше 200 кусков", description: "На трёхсотом куске ClickHouse отказывает в любой вставке, и разбор встаёт. Обычно это значит, что слияния не успевают за мелкими вставками. Смотреть system.parts и system.merges.", value: "{{ humanize $values.A.Value }}", threshold: "больше 200, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-clickhouse-parts", __dashboardUid__: "samoylove-cs2", __panelId__: "2001" }
+        annotations: { summary: "В одной партиции ClickHouse больше 200 кусков", description: "На трёхсотом куске ClickHouse отказывает в любой вставке, и разбор встаёт. Обычно это значит, что слияния не успевают за мелкими вставками. Смотреть system.parts и system.merges.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 200, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-clickhouse-parts", __dashboardUid__: "samoylove-cs2", __panelId__: "2001" }
 
       - uid: cs2-render-heartbeat
         title: "Пристрелка: машина рендера молчит"
@@ -4557,7 +4557,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Машина рендера {{ $labels.engine }} молчит больше 10 минут", description: "Её задания без камер уже уходят другим машинам, а ролики с камерами повтора ждут. Смотреть, жив ли работник: на cs2-render это служба в контейнере, на cs2-win — задача планировщика cs2-render и C:\\cs2\\logs\\render.log.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 10 мин, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-heartbeat", __dashboardUid__: "samoylove-cs2", __panelId__: "1601" }
+        annotations: { summary: "Машина рендера {{ $labels.engine }} молчит больше 10 минут", description: "Её задания без камер уже уходят другим машинам, а ролики с камерами повтора ждут. Смотреть, жив ли работник: на cs2-render это служба в контейнере, на cs2-win — задача планировщика cs2-render и C:\\cs2\\logs\\render.log.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 10 мин, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-heartbeat", __dashboardUid__: "samoylove-cs2", __panelId__: "1601" }
 
       - uid: cs2-render-mode-mismatch
         title: "Пристрелка: режим машины рендера не совпадает с сервисом"
@@ -4713,7 +4713,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "В cs2-render за час убито по памяти три и больше процессов", description: "Игру или ffmpeg рендера убивает OOM-killer: задания повторяются по кругу, клипы опаздывают. Одиночное убийство при тяжёлой демке — не повод будить. Смотреть память cs2-render и не идёт ли рядом стенд или повтор.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 3, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-oom", __dashboardUid__: "samoylove-cs2", __panelId__: "1709" }
+        annotations: { summary: "В cs2-render за час убито по памяти три и больше процессов", description: "Игру или ffmpeg рендера убивает OOM-killer: задания повторяются по кругу, клипы опаздывают. Одиночное убийство при тяжёлой демке — не повод будить. Смотреть память cs2-render и не идёт ли рядом стенд или повтор.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 3, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-render-oom", __dashboardUid__: "samoylove-cs2", __panelId__: "1709" }
 
       - uid: cs2-telegram-rejected
         title: "Пристрелка: Telegram не принимает сообщения бота"
@@ -4742,7 +4742,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Telegram отказал в отправке разбора три и больше раз за час", description: "Разборы после матча не доходят до людей. «токен_отвергнут» — ключ бота отозван, не дойдёт ничего: поставить новый CS2_TELEGRAM_BOT_TOKEN. «отказ» — ответ Telegram, причина в журнале cs2-chain. Люди, закрывшие бота, сюда не входят.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 3, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-telegram-rejected", __dashboardUid__: "samoylove-cs2", __panelId__: "1801" }
+        annotations: { summary: "Telegram отказал в отправке разбора три и больше раз за час", description: "Разборы после матча не доходят до людей. «токен_отвергнут» — ключ бота отозван, не дойдёт ничего: поставить новый CS2_TELEGRAM_BOT_TOKEN. «отказ» — ответ Telegram, причина в журнале cs2-chain. Люди, закрывшие бота, сюда не входят.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 3, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-telegram-rejected", __dashboardUid__: "samoylove-cs2", __panelId__: "1801" }
 
       - uid: cs2-music-provider-down
         title: "Пристрелка: провайдер музыки не отвечает"
@@ -4771,7 +4771,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "Провайдер музыки {{ $labels.provider }} отказывает больше чем в половине обращений", description: "Вкладка этого провайдера в конструкторе роликов пуста, ролики с его треками не соберутся. У Яндекса обычно истёк вход или сменился API; у Jamendo — client_id. Причина словами провайдера — в журнале cs2-api.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "не меньше 500%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-music-provider-down", __dashboardUid__: "samoylove-cs2", __panelId__: "1902" }
+        annotations: { summary: "Провайдер музыки {{ $labels.provider }} отказывает больше чем в половине обращений", description: "Вкладка этого провайдера в конструкторе роликов пуста, ролики с его треками не соберутся. У Яндекса обычно истёк вход или сменился API; у Jamendo — client_id. Причина словами провайдера — в журнале cs2-api.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 500%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-music-provider-down", __dashboardUid__: "samoylove-cs2", __panelId__: "1902" }
 
       - uid: cs2-pages-slow
         title: "Пристрелка: страницы сайта отвечают медленно"
@@ -4800,7 +4800,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: cs2 }
-        annotations: { summary: "95-й перцентиль ответа страниц дольше двух секунд", description: "Сайт открывается медленно у всех. Отдача роликов и звука (раздел «медиа»), статика и служебные ручки не в счёте — это время просмотра, а не сервера. Какой раздел — «Время ответа, p95 по разделам»; чаще всего ClickHouse под нагрузкой разбора.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 0,05 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pages-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "111" }
+        annotations: { summary: "95-й перцентиль ответа страниц дольше двух секунд", description: "Сайт открывается медленно у всех. Отдача роликов и звука (раздел «медиа»), статика и служебные ручки не в счёте — это время просмотра, а не сервера. Какой раздел — «Время ответа, p95 по разделам»; чаще всего ClickHouse под нагрузкой разбора.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 0,05 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#cs2-pages-slow", __dashboardUid__: "samoylove-cs2", __panelId__: "111" }
 
   # --- CI: очередь на своих раннерах -----------------------------------------
   # Данные — сборщик ci-queue-collect на хосте (репозиторий home-server,
@@ -4844,7 +4844,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Задание в очереди на большие Linux-раннеры ждёт дольше 10 минут", description: "Очередь на собственные Linux-раннеры копится: самое старое задание ждёт больше 10 минут. Число раннеров меняет ci-autoscaler: если на панели «Почему не поднимает новых» упор в память — очередь стоит из-за бюджета или хоста (см. «CI: раннерам не хватает памяти хоста»). Если упора нет, а раннеры есть, — они не берут работу: на хосте ci-autoscaler status и journalctl -u 'ci-runner-cycle@*'.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-linux", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
+        annotations: { summary: "Задание в очереди на большие Linux-раннеры ждёт дольше 10 минут", description: "Очередь на собственные Linux-раннеры копится: самое старое задание ждёт больше 10 минут. Число раннеров меняет ci-autoscaler: если на панели «Почему не поднимает новых» упор в память — очередь стоит из-за бюджета или хоста (см. «CI: раннерам не хватает памяти хоста»). Если упора нет, а раннеры есть, — они не берут работу: на хосте ci-autoscaler status и journalctl -u 'ci-runner-cycle@*'.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 10 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-linux", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
 
       - uid: ci-queue-stuck-light
         title: "CI: задание ждёт лёгкий раннер дольше 5 минут"
@@ -4873,7 +4873,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Задание в очереди на лёгкие раннеры ждёт дольше 5 минут", description: "Очередь на лёгкие раннеры (метка light; сколько их, решает ci-autoscaler): линтеры, тесты на Node, снимки страниц и покрытие. Работы в таком задании секунды, поэтому пять минут ожидания значат, что лёгких не хватает или они не берут работу. Порог ниже, чем у больших, по той же причине.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 5 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-light", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
+        annotations: { summary: "Задание в очереди на лёгкие раннеры ждёт дольше 5 минут", description: "Очередь на лёгкие раннеры (метка light; сколько их, решает ci-autoscaler): линтеры, тесты на Node, снимки страниц и покрытие. Работы в таком задании секунды, поэтому пять минут ожидания значат, что лёгких не хватает или они не берут работу. Порог ниже, чем у больших, по той же причине.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 5 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-light", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
 
       - uid: ci-queue-stuck-windows
         title: "CI: задание ждёт win-builder дольше 15 минут"
@@ -4902,7 +4902,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Задание в очереди на win-builder ждёт дольше 15 минут", description: "Задание на Windows-раннер ждёт больше 15 минут, а машине на загрузку хватает минуты. Значит, win-builder не поднялась или раннер на ней офлайн: journalctl -u win-builder-ondemand на хосте, состояние службы раннера в VM (Home Server CLAUDE.md, раздел про win-builder).", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 15 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-windows", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
+        annotations: { summary: "Задание в очереди на win-builder ждёт дольше 15 минут", description: "Задание на Windows-раннер ждёт больше 15 минут, а машине на загрузку хватает минуты. Значит, win-builder не поднялась или раннер на ней офлайн: journalctl -u win-builder-ondemand на хосте, состояние службы раннера в VM (Home Server CLAUDE.md, раздел про win-builder).", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 15 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-stuck-windows", __dashboardUid__: "samoylove-ci", __panelId__: "17" }
 
       - uid: ci-linux-runners-missing
         title: "CI: поднятые раннеры не видны в GitHub"
@@ -4939,7 +4939,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Контроллер поднял раннеры, а GitHub видит онлайн на два меньше", description: "Контроллер ci-autoscaler считает минимум двух раннеров поднятыми (процесс раннера жив), а GitHub не видит их в онлайне уже 15 минут. Значит, раннеры не могут до него достучаться или регистрация не проходит, и задания стоят. На хосте: ci-autoscaler status, journalctl -u 'ci-runner-cycle@*'.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 2, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-linux-runners-missing", __dashboardUid__: "samoylove-ci", __panelId__: "19" }
+        annotations: { summary: "Контроллер поднял раннеры, а GitHub видит онлайн на два меньше", description: "Контроллер ci-autoscaler считает минимум двух раннеров поднятыми (процесс раннера жив), а GitHub не видит их в онлайне уже 15 минут. Значит, раннеры не могут до него достучаться или регистрация не проходит, и задания стоят. На хосте: ci-autoscaler status, journalctl -u 'ci-runner-cycle@*'.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 2, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-linux-runners-missing", __dashboardUid__: "samoylove-ci", __panelId__: "19" }
 
       - uid: ci-autoscaler-down
         title: "CI: контроллер раннеров молчит"
@@ -4971,7 +4971,7 @@ groups:
         execErrState: Error
         for: 3m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Контроллер раннеров не отмечался больше двух минут", description: "ci-autoscaler не закончил такт больше двух минут. Раннеры это переживут: цикл, не видящий свежего пульса контроллера, работает по-старому, класс по имени. Но под очередь новые не поднимутся, лишние не погаснут, а запаркованные слоты так и останутся стоять. На хосте: systemctl status ci-autoscaler, journalctl -u ci-autoscaler.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 3 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-down", __dashboardUid__: "samoylove-ci", __panelId__: "45" }
+        annotations: { summary: "Контроллер раннеров не отмечался больше двух минут", description: "ci-autoscaler не закончил такт больше двух минут. Раннеры это переживут: цикл, не видящий свежего пульса контроллера, работает по-старому, класс по имени. Но под очередь новые не поднимутся, лишние не погаснут, а запаркованные слоты так и останутся стоять. На хосте: systemctl status ci-autoscaler, journalctl -u ci-autoscaler.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 3 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-down", __dashboardUid__: "samoylove-ci", __panelId__: "45" }
 
       - uid: ci-autoscaler-memory-bound
         title: "CI: раннерам не хватает памяти хоста"
@@ -5004,7 +5004,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Контроллер упёрся в память, а задания ждут дольше 15 минут", description: "Задание ждёт раннер больше 15 минут, и контроллер не поднимает новых из-за памяти. Причина budget — сумма потолков раннеров дошла до ci_mem_max в /etc/ci-autoscaler.toml на хосте: поднять бюджет, если хосту хватает. Причина host — память занята не CI (рендер, Windows-машины, прод): смотреть панель «Память инстансов» на панели железа.", value: "{{ humanize $values.A.Value }}", threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-memory-bound", __dashboardUid__: "samoylove-ci", __panelId__: "54" }
+        annotations: { summary: "Контроллер упёрся в память, а задания ждут дольше 15 минут", description: "Задание ждёт раннер больше 15 минут, и контроллер не поднимает новых из-за памяти. Причина budget — сумма потолков раннеров дошла до ci_mem_max в /etc/ci-autoscaler.toml на хосте: поднять бюджет, если хосту хватает. Причина host — память занята не CI (рендер, Windows-машины, прод): смотреть панель «Память инстансов» на панели железа.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-memory-bound", __dashboardUid__: "samoylove-ci", __panelId__: "54" }
 
       # Набор ядер раннеров (причина cpu_pool, с 30.09.2026): контроллер не
       # поднимает раннер, потому что общий набор ядер с учётом ожидаемого
@@ -5037,7 +5037,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Контроллер упёрся в набор ядер, а задания ждут дольше 15 минут", description: "Задание ждёт раннер больше 15 минут, и контроллер не поднимает новый: общий набор ядер раннеров (cpu_pool) с учётом ожидаемого расхода уже занят. Если ядра набора на деле простаивают, ожидаемый расход завышен: смотреть ci_autoscaler_cpu_pool_cores (used, reserved, max) и cpu_pool_max в /etc/ci-autoscaler.toml на хосте. Если заняты, CI упирается в процессор, и новый раннер только растянул бы все задания.", value: "{{ humanize $values.A.Value }}", threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-cpu-bound", __dashboardUid__: "samoylove-ci", __panelId__: "54" }
+        annotations: { summary: "Контроллер упёрся в набор ядер, а задания ждут дольше 15 минут", description: "Задание ждёт раннер больше 15 минут, и контроллер не поднимает новый: общий набор ядер раннеров (cpu_pool) с учётом ожидаемого расхода уже занят. Если ядра набора на деле простаивают, ожидаемый расход завышен: смотреть ci_autoscaler_cpu_pool_cores (used, reserved, max) и cpu_pool_max в /etc/ci-autoscaler.toml на хосте. Если заняты, CI упирается в процессор, и новый раннер только растянул бы все задания.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-cpu-bound", __dashboardUid__: "samoylove-ci", __panelId__: "54" }
 
       - uid: ci-autoscaler-actions-failing
         title: "CI: контроллер не может поднять или погасить раннер"
@@ -5066,7 +5066,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Три и больше неудачных действий контроллера за 15 минут", description: "За 15 минут три и больше действий ci-autoscaler не удались: не создаётся слот, не снимается регистрация через API GitHub, не стартует служба слота или адрес слота не входит в изоляцию (такой слот контроллер не запускает намеренно). Причина — в журнале: journalctl -u ci-autoscaler | grep '!'.", value: "{{ humanize $values.A.Value }}", threshold: "не меньше 3", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-actions-failing", __dashboardUid__: "samoylove-ci", __panelId__: "56" }
+        annotations: { summary: "Три и больше неудачных действий контроллера за 15 минут", description: "За 15 минут три и больше действий ci-autoscaler не удались: не создаётся слот, не снимается регистрация через API GitHub, не стартует служба слота или адрес слота не входит в изоляцию (такой слот контроллер не запускает намеренно). Причина — в журнале: journalctl -u ci-autoscaler | grep '!'.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "не меньше 3", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-autoscaler-actions-failing", __dashboardUid__: "samoylove-ci", __panelId__: "56" }
 
       - uid: ci-scaleset-listener-down
         title: "CI: слушатель Runner Scale Set отключён"
@@ -5126,7 +5126,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Сборщик очереди заданий не обновлялся больше 10 минут", description: "Сборщик очереди раннеров (ci-queue-collect на хосте) не пишет данные или не может опросить GitHub. Пока это так, тревоги об очереди молчат. На хосте: systemctl status ci-queue-collect.timer, journalctl -u ci-queue-collect.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-collector-stale", __dashboardUid__: "samoylove-ci", __panelId__: "13" }
+        annotations: { summary: "Сборщик очереди заданий не обновлялся больше 10 минут", description: "Сборщик очереди раннеров (ci-queue-collect на хосте) не пишет данные или не может опросить GitHub. Пока это так, тревоги об очереди молчат. На хосте: systemctl status ci-queue-collect.timer, journalctl -u ci-queue-collect.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-queue-collector-stale", __dashboardUid__: "samoylove-ci", __panelId__: "13" }
 
       - uid: ci-orphan-docker
         title: "CI: сирота docker в раннере без задания"
@@ -5155,7 +5155,7 @@ groups:
         execErrState: Error
         for: 20m
         labels: { severity: warning, area: ci }
-        annotations: { summary: "Раннер {{ $labels.name }} без задания держит больше 1,5 ГиБ памяти", description: "Docker-сборка упавшего прогона осталась жить после того, как GitHub закрыл задание (26.09.2026 так восемь часов крутился devkita64). Раннер держит память хоста, контроллер не поднимает новых, хост уходит в давление памяти. Найти: ps внутри раннера; убить через cgroup.kill docker-*.scope, затем перезапустить раннер.", value: "{{ humanize1024 $values.A.Value }}Б", threshold: "больше 1,5 ГиБ, держится 20 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-orphan-docker", __dashboardUid__: "samoylove-ci", __panelId__: "70" }
+        annotations: { summary: "Раннер {{ $labels.name }} без задания держит больше 1,5 ГиБ памяти", description: "Docker-сборка упавшего прогона осталась жить после того, как GitHub закрыл задание (26.09.2026 так восемь часов крутился devkita64). Раннер держит память хоста, контроллер не поднимает новых, хост уходит в давление памяти. Найти: ps внутри раннера; убить через cgroup.kill docker-*.scope, затем перезапустить раннер.", value: '{{ if $values.A }}{{ humanize1024 $values.A.Value }}Б{{ else }}нет данных{{ end }}', threshold: "больше 1,5 ГиБ, держится 20 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#ci-orphan-docker", __dashboardUid__: "samoylove-ci", __panelId__: "70" }
 
   # --- Мониторинг сам о себе -------------------------------------------------
   # Ревью панелей 19.09.2026 нашло, что у части целей сбора нет ни одного
@@ -5253,7 +5253,7 @@ groups:
         execErrState: Error
         for: 15m
         labels: { severity: warning, area: monitoring }
-        annotations: { summary: "Grafana не может вычислить правила тревог", description: "Правило, которое не вычисляется, не видит того, что должно сторожить. Какое именно — страница /alerting/list, состояние Error.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-grafana-rule-eval-failing", __dashboardUid__: "samoylove-overview", __panelId__: "51" }
+        annotations: { summary: "Grafana не может вычислить правила тревог", description: "Правило, которое не вычисляется, не видит того, что должно сторожить. Какое именно — страница /alerting/list, состояние Error.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-grafana-rule-eval-failing", __dashboardUid__: "samoylove-overview", __panelId__: "51" }
 
       - uid: mon-host-textfile-stale
         title: "Мониторинг: файл метрик на хосте устарел"
@@ -5285,7 +5285,7 @@ groups:
         execErrState: Error
         for: 5m
         labels: { severity: warning, area: monitoring }
-        annotations: { summary: "Файл {{ $labels.file }} не обновлялся больше 30 минут", description: "Сборщик на хосте завис или его таймер встал (файл — метка file: smart.prom и zfs.prom пишет node-textfile-collect раз в 5 минут, ci.prom — ci-queue-collect раз в 30 секунд). Старые значения при этом выглядят живыми, и «Сервер: сбор SMART и ZFS сломан» молчит.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 30 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-host-textfile-stale", __dashboardUid__: "samoylove-overview", __panelId__: "49" }
+        annotations: { summary: "Файл {{ $labels.file }} не обновлялся больше 30 минут", description: "Сборщик на хосте завис или его таймер встал (файл — метка file: smart.prom и zfs.prom пишет node-textfile-collect раз в 5 минут, ci.prom — ci-queue-collect раз в 30 секунд). Старые значения при этом выглядят живыми, и «Сервер: сбор SMART и ZFS сломан» молчит.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 30 мин, держится 5 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-host-textfile-stale", __dashboardUid__: "samoylove-overview", __panelId__: "49" }
 
       - uid: mon-scrape-target-missing
         title: "Мониторинг: цель сбора пропала из конфига"
@@ -5372,7 +5372,7 @@ groups:
         execErrState: Error
         for: 0m
         labels: { severity: warning, area: monitoring }
-        annotations: { summary: "Сбои уплотнения или журнала TSDB Prometheus", description: "Хранилище Prometheus портится: сбой уплотнения или журнала WAL. История может пропасть — смотреть журнал контейнера и место на томе.", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-prometheus-tsdb-failures", __dashboardUid__: "samoylove-overview", __panelId__: "54" }
+        annotations: { summary: "Сбои уплотнения или журнала TSDB Prometheus", description: "Хранилище Prometheus портится: сбой уплотнения или журнала WAL. История может пропасть — смотреть журнал контейнера и место на томе.", value: '{{ if $values.A }}{{ humanize $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-prometheus-tsdb-failures", __dashboardUid__: "samoylove-overview", __panelId__: "54" }
 
       - uid: mon-prometheus-tsdb-near-limit
         title: "Мониторинг: хранилище Prometheus почти у лимита"
@@ -5401,7 +5401,7 @@ groups:
         execErrState: Error
         for: 1h
         labels: { severity: warning, area: monitoring }
-        annotations: { summary: "TSDB занимает больше 85% лимита размера", description: "Упёршись в лимит размера, Prometheus молча удаляет историю раньше 90 дней. 19.09.2026 было занято 8%.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 85%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-prometheus-tsdb-near-limit", __dashboardUid__: "samoylove-overview", __panelId__: "48" }
+        annotations: { summary: "TSDB занимает больше 85% лимита размера", description: "Упёршись в лимит размера, Prometheus молча удаляет историю раньше 90 дней. 19.09.2026 было занято 8%.", value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "больше 85%, держится 1 ч", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-prometheus-tsdb-near-limit", __dashboardUid__: "samoylove-overview", __panelId__: "48" }
 
       - uid: mon-grafana-scheduler-behind
         title: "Мониторинг: Grafana не успевает вычислять тревоги"
@@ -5430,7 +5430,7 @@ groups:
         execErrState: Error
         for: 10m
         labels: { severity: warning, area: monitoring }
-        annotations: { summary: "Планировщик тревог Grafana отстаёт больше чем на 30 секунд", description: "Тревоги вычисляются с опозданием на столько же, насколько отстаёт планировщик.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 30 с, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-grafana-scheduler-behind", __dashboardUid__: "samoylove-overview", __panelId__: "50" }
+        annotations: { summary: "Планировщик тревог Grafana отстаёт больше чем на 30 секунд", description: "Тревоги вычисляются с опозданием на столько же, насколько отстаёт планировщик.", value: '{{ if $values.A }}{{ humanizeDuration $values.A.Value }}{{ else }}нет данных{{ end }}', threshold: "дольше 30 с, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-grafana-scheduler-behind", __dashboardUid__: "samoylove-overview", __panelId__: "50" }
 
       - uid: mon-scrape-near-timeout
         title: 'Мониторинг: сбор цели почти упирается в таймаут'
@@ -5474,7 +5474,7 @@ groups:
           summary: Сбор {{ $labels.job }} занимает больше 80% таймаута
           description: Цель {{ $labels.job }} / {{ $labels.instance }} тратит более 80% собственного таймаута. Проверить нагрузку экспортёра и давление ресурсов. Упавшая цель контролируется
             отдельной тревогой; увеличение таймаута не устраняет причину.
-          value: '{{ humanizePercentage $values.A.Value }}'
+          value: '{{ if $values.A }}{{ humanizePercentage $values.A.Value }}{{ else }}нет данных{{ end }}'
           threshold: Более 80% таймаута, 15 минут
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-scrape-near-timeout
           __dashboardUid__: samoylove-reliability
@@ -5529,7 +5529,7 @@ groups:
           description: 'Цель {{ $labels.job }}: проверить рост данных и квоту. Удаление версии контента требует сверки активных манифестов; снапшоты могут удерживать удалённые блоки. При
             менее 10% вместо этого предупреждения действует критический алерт.'
           threshold: Менее 15% и 40 ГиБ, но не ниже аварийного порога 10%; 30 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-root-space-warning
           __dashboardUid__: samoylove-reliability
           __panelId__: '31'
@@ -5576,7 +5576,7 @@ groups:
           summary: 'Сервер: на диске C: Windows мало места'
           description: 'Проверить C:\cs2, Steam и временные результаты. Диск C: отличается от каталога клипов Z:. Не удалять рабочую игру и файлы заданий.'
           threshold: Свободно менее 10% или 10 ГиБ, 15 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-win-system-disk-low
           __dashboardUid__: samoylove-reliability
           __panelId__: '33'
@@ -5623,7 +5623,7 @@ groups:
           description: Контейнер {{ $labels.container }} использует более 85% лимита. Проверить график working set, запросы, одновременный рендер графиков и OOM. Увеличивать лимит только
             после проверки запаса памяти хоста.
           threshold: Working set > 85% лимита, 10 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-memory-high
           __dashboardUid__: samoylove-reliability
           __panelId__: '41'
@@ -5669,7 +5669,7 @@ groups:
           summary: 'Мониторинг: процесс контейнера убит по памяти'
           description: OOM внутри {{ $labels.container }}. Сверить память и журнал ядра. Счётчик сбрасывается при пересоздании контейнера, поэтому общий счётчик ядра остаётся необходимым.
           threshold: Хотя бы одно новое убийство за 15 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-oom
           __dashboardUid__: samoylove-reliability
           __panelId__: '43'
@@ -5716,7 +5716,7 @@ groups:
           description: 'Проверить docker inspect и журнал {{ $labels.container }}. Короткая штатная выкатка укладывается в выдержку. Если сама Grafana остановлена, этот стек не сможет
             отправить уведомление: нужен внешний наблюдатель.'
           threshold: Контейнер не работает 3 минуты
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-stopped
           __dashboardUid__: samoylove-reliability
           __panelId__: '46'
@@ -5763,7 +5763,7 @@ groups:
           summary: 'Мониторинг: состояние Docker не обновляется'
           description: Проверить monitoring-containers-collect.timer и журнал одноимённой службы в машине со стеком. Ошибка сбора не означает нулевую память контейнера.
           threshold: Файл старше 3 минут, ошибка чтения или метрики отсутствуют; 5 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-collector-stale
           __dashboardUid__: samoylove-reliability
           __panelId__: '46'
@@ -5811,7 +5811,7 @@ groups:
           description: Сбой отправки через {{ $labels.integration }}. Проверить журнал Grafana, сеть и ответ API. Возможен успешный повтор. Тестовое сообщение не отправлять автоматически.
             При отказе того же канала этот алерт тоже не гарантирует доставку.
           threshold: Новая ошибка отправки за 15 минут, включая первое появление счётчика
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-notification-failed
           __dashboardUid__: samoylove-reliability
           __panelId__: '44'
@@ -5857,7 +5857,7 @@ groups:
           summary: 'Мониторинг: файл метрик не читается'
           description: Экспортёр доступен, но отверг хотя бы один файл textfile. Посмотреть его журнал и проверить синтаксис .prom, не заменяя отсутствие метрик нулём.
           threshold: Ошибка разбора textfile 5 минут
-          value: '{{ $values.A.Value }}'
+          value: '{{ if $values.A }}{{ $values.A.Value }}{{ else }}нет данных{{ end }}'
           runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-textfile-parse-error
           __dashboardUid__: samoylove-reliability
           __panelId__: '46'

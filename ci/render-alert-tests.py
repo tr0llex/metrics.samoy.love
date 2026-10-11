@@ -9,6 +9,7 @@ The native alert rules also use production `for` and labels. Grafana templated
 annotations are intentionally omitted: promtool cannot render those templates.
 """
 import argparse
+import json
 from pathlib import Path
 
 import yaml
@@ -61,6 +62,15 @@ def build(output):
     used_expressions = set()
     for case in fixtures["tests"]:
         for test in case.get("promql_expr_test", []):
+            if "dashboard_panel" in test:
+                # Read the real panel query so an interval change cannot leave
+                # a copied test expression green while coverage is wrong.
+                dashboard, panel_id, ref = test.pop("dashboard_panel").split(":")
+                document = json.loads((ROOT / f"grafana/dashboards/{dashboard}.json").read_text(encoding="utf-8"))
+                panel = next(p for p in document["panels"] if p["id"] == int(panel_id))
+                query = next(q["expr"] for q in panel["targets"] if q["refId"] == ref)
+                test["expr"] = query.replace("$__range_s", "1800").replace("$__range", "30m")
+                continue
             uid = test.pop("rule_uid")
             if uid not in rules:
                 raise ValueError(f"unknown rule: {uid}")

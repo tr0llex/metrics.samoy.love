@@ -547,3 +547,29 @@ tests:
       - rule_uid: mon-scrape-near-timeout
         eval_time: 30m
         exp_samples: []
+
+  - name: Coverage respects 30s and 60s scrapes and detects missing samples
+    interval: 30s
+    input_series:
+    - series: up{job="node",instance="normal"}
+      values: 1+0x60
+    - series: up{job="node-containers",instance="slow"}
+      values: 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1
+        _ 1 _ 1 _ 1
+    - series: up{job="cs2-clickhouse",instance="slow"}
+      values: 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1 _ 1
+        _ 1 _ 1 _ 1
+    - series: up{job="node",instance="gap"}
+      values: 1+0x30 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    promql_expr_test:
+    - dashboard_panel: reliability:12:A
+      eval_time: 30m
+      exp_samples:
+      - labels: '{job="node",instance="normal"}'
+        value: 1
+      - labels: '{job="node-containers",instance="slow"}'
+        value: 1
+      - labels: '{job="cs2-clickhouse",instance="slow"}'
+        value: 1
+      - labels: '{job="node",instance="gap"}'
+        value: 0.5
