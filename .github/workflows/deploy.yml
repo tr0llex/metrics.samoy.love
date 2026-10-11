@@ -143,6 +143,7 @@ jobs:
         docker run --rm --entrypoint promtool -v "$RUNNER_TEMP/pt:/etc/prometheus:ro"
         prom/prometheus:$PROM check config /etc/prometheus/prometheus.yml &&
         python3 ci/alerts.py &&
+        python3 -m unittest discover -s ci -p "test_collectors.py"
         python3 ci/render-alert-tests.py --output "$RUNNER_TEMP/alert-tests" &&
         docker run --rm --entrypoint promtool
         -v "$RUNNER_TEMP/alert-tests:/tests:ro" -w /tests

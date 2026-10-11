@@ -17,7 +17,8 @@ ROOT = Path(__file__).resolve().parent.parent
 UIDS = frozenset(("cs2-render-failed", "cs2-render-disk-unknown",
                   "cs2-render-disk-low", "cs2-render-first-try-low",
                   "cs2-worker-silent", "cs2-chain-waiting", "cs2-profiles-stale",
-                  "hw-laptop-backup-old", "hw-laptop-backup-missing"))
+                  "hw-laptop-backup-old", "hw-laptop-backup-missing",
+                  'hw-memory-pressure', 'hw-root-space-warning', 'hw-win-system-disk-low', 'mon-container-memory-high', 'mon-container-oom', 'mon-container-stopped', 'mon-container-collector-stale', 'mon-notification-failed', 'mon-textfile-parse-error', 'mon-scrape-near-timeout'))
 
 
 def load_rules(path):

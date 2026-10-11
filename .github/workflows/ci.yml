@@ -134,6 +134,7 @@ jobs:
       # и выдержку for, включая нулевое место и исключение диагностики.
       - name: Поведение тревог рендера, доставки и копий
         run: |
+          python3 -m unittest discover -s ci -p "test_collectors.py"
           python3 ci/render-alert-tests.py --output "$RUNNER_TEMP/render-alerts"
           docker run --rm --entrypoint promtool \
             -v "$RUNNER_TEMP/render-alerts:/tests:ro" -w /tests \

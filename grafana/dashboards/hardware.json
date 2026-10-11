@@ -9,7 +9,7 @@
   "timezone": "browser",
   "editable": false,
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "1m",
   "time": {
     "from": "now-24h",
@@ -54,6 +54,14 @@
     "list": []
   },
   "links": [
+    {
+      "title": "Надёжность · неделя",
+      "type": "link",
+      "url": "/d/samoylove-reliability",
+      "targetBlank": false,
+      "keepTime": false,
+      "includeVars": false
+    },
     {
       "title": "Обзор",
       "type": "link",
@@ -766,7 +774,7 @@
     {
       "type": "stat",
       "title": "Убито по памяти за сутки",
-      "description": "Сколько процессов убил OOM-killer внутри контейнеров и на хосте за сутки. Ноль — норма. В cs2-render это чаще всего игра или ffmpeg рендера; на хосте — нехватка памяти всей машины.",
+      "description": "Все убийства процессов ядром за сутки, включая лимиты контейнеров. Один счётчик ядра без сложения с Incus: одна жертва учитывается один раз. increase даёт оценку по собранным точкам; подробности — на дашборде «Надёжность». Нет данных означает неизвестное состояние.",
       "id": 83,
       "datasource": {
         "type": "prometheus",
@@ -775,7 +783,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(incus_memory_OOM_kills_total[1d])) + (sum(increase(host_global_oom_kills_total{instance=\"srv-host\"}[1d])) or vector(0))",
+          "expr": "sum(increase(node_vmstat_oom_kill{job=\"node-host\"}[1d]))",
           "instant": true
         }
       ],
@@ -1135,7 +1143,7 @@
     {
       "type": "timeseries",
       "title": "Убито за нехваткой памяти",
-      "description": "Сколько процессов ядро убило за последний час. У инстанса — он упёрся в собственный лимит памяти (его значение — incus config get <имя> limits.memory); линия появляется только если такое было. «Кончилась память хоста» — убийства, когда памяти не хватило всей машине (строки ядра с global_oom); жертвой тогда может стать кто угодно, включая базы прода. Любое значение выше нуля — что-то упало посреди работы.\n\nТревоги по этой панели: «Сервер: в контейнере убит процесс по памяти» (предупреждение: больше 0); «Сервер: ядро убивало процессы от нехватки памяти» (авария: больше 0).",
+      "description": "Общий счётчик ядра включает global OOM и ограничения cgroup. Ряды Incus — детализация, их нельзя прибавлять к общему итогу. История одноразового инстанса может оборваться после отката; журнал ядра нужен для точной атрибуции.",
       "id": 58,
       "gridPos": {
         "h": 8,
@@ -1146,13 +1154,18 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "increase(incus_memory_OOM_kills_total{name=~\"$instance\"}[1h]) > 0",
-          "legendFormat": "{{name}}"
+          "expr": "increase(node_vmstat_oom_kill{job=\"node-host\"}[1h])",
+          "legendFormat": "всего — ядро"
         },
         {
           "refId": "B",
-          "expr": "increase(host_global_oom_kills_total{instance=\"srv-host\"}[1h]) > 0",
-          "legendFormat": "кончилась память хоста"
+          "expr": "increase(host_global_oom_kills_total{job=\"node-host\"}[1h])",
+          "legendFormat": "из них — нехватка памяти хоста"
+        },
+        {
+          "refId": "C",
+          "expr": "increase(incus_memory_OOM_kills_total{name=~\"$instance\"}[1h]) > 0",
+          "legendFormat": "{{name}} — детализация"
         }
       ],
       "fieldConfig": {
@@ -2364,7 +2377,7 @@
     {
       "type": "stat",
       "title": "Возраст SMART и ZFS",
-      "description": "Сколько назад обновлялись smart.prom и zfs.prom. Сборщик пишет их раз в пять минут. Если он встал, node_exporter продолжает отдавать последние записанные значения, и все плитки SMART и ZFS выше выглядят живыми — эта плитка единственное, что это покажет.\n\nТревоги по этой панели: «Сервер: сбор SMART и ZFS сломан» (предупреждение: держится 30 мин).",
+      "description": "Возраст только smart.prom и zfs.prom. Внешняя резервная копия обновляется отдельно и не влияет на свежесть датчиков.",
       "id": 49,
       "gridPos": {
         "h": 4,
@@ -2375,7 +2388,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(time() - node_textfile_mtime_seconds{instance=\"srv-host\"})",
+          "expr": "max(time() - node_textfile_mtime_seconds{job=\"node-host\",file=~\".*/(smart|zfs)\\\\.prom\"})",
           "instant": true
         }
       ],

@@ -1,0 +1,15 @@
+[Unit]
+Description=Memory limits and state of monitoring containers
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/samoylove-metrics/current/collectors/monitoring-containers-collect.py
+Environment=LC_ALL=C
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ReadWritePaths=/var/lib/node_exporter/textfile
+TimeoutStartSec=20
+Nice=10
