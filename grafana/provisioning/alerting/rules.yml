@@ -94,16 +94,16 @@ groups:
     interval: 1m
     rules:
       - uid: infra-disk-space-low
-        title: "Сервер: в контейнере web кончается диск"
+        title: 'Сервер: на системном диске мало места'
         condition: C
         data:
           - refId: A
             datasourceUid: samoylove-prometheus
-            relativeTimeRange: { from: 600, to: 0 }
+            relativeTimeRange:
+              from: 600
+              to: 0
             model:
-              # job!="node-containers": корни cs2-render, ci-db и games (с 30.09.2026)
-              # в эту тревогу о web не входят.
-              expr: 'node_filesystem_avail_bytes{mountpoint="/",job!="node-containers"} / node_filesystem_size_bytes{mountpoint="/",job!="node-containers"} < 0.10'
+              expr: node_filesystem_avail_bytes{mountpoint="/",job=~"node|node-host"} / node_filesystem_size_bytes{mountpoint="/",job=~"node|node-host"} < 0.10
               instant: true
               refId: A
           - refId: C
@@ -112,17 +112,34 @@ groups:
               type: threshold
               expression: A
               conditions:
-                - evaluator: { type: gt, params: [-1000000000] }
-                  operator: { type: and }
-                  query: { params: [C] }
-                  reducer: { type: last }
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
                   type: query
               refId: C
         noDataState: OK
         execErrState: Error
         for: 15m
-        labels: { severity: critical, area: server }
-        annotations: { summary: "На корне контейнера web свободно меньше 10%", description: "В web живут nginx, Prometheus, Grafana и статика всех сайтов. Кончится место — перестанут писаться журналы и метрики, выкатка не распакуется. Смотреть, кто вырос: du -xh / в web, чаще всего журналы docker или TSDB.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "меньше 10%, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-disk-space-low", __dashboardUid__: "samoylove-overview", __panelId__: "23" }
+        labels:
+          severity: critical
+          area: server
+        annotations:
+          summary: 'Сервер: на системном диске мало места'
+          description: 'На корневом диске цели {{ $labels.job }} осталось менее 10%. Для web действует собственная квота ZFS: свободное место общего пула её не отменяет. Проверить крупные
+            версии контента и снимки перед удалением; не делать blanket prune.'
+          value: '{{ humanizePercentage $values.A.Value }}'
+          threshold: меньше 10%, держится 15 мин
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#infra-disk-space-low
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '31'
 
       - uid: infra-cpu-saturated
         title: "Сервер: процессор хоста занят полностью"
@@ -665,32 +682,17 @@ groups:
         annotations: { summary: "В {{ $labels.name }} OOM-killer убил процесс", description: "Процесс убит за нехватку памяти в инстансе (метка name): он умер молча, и то, что он делал, не доехало. Разбор 19.09.2026: все 17 убийств в web — это Chromium рендерера скриншотов с лимитом 512 МБ, шесть в cs2-render — старый потолок игры, поднятый с тех пор. Считается increase, а не changes: у одноразовых раннеров счётчик обнуляется на каждом задании, поэтому они исключены по имени — и большие ci-runner, и лёгкие ci-light. Нарочные потолки внутри cs2 (работник, разбор демки под limitmem) метрика Incus отличить не умеет — для этого нужен сбор по cgroup. С 29.09.2026 cs2-render здесь не считается: 55 убийств за неделю давали сообщение на каждое, у рендера теперь своя тревога с порогом — «Пристрелка: рендер убивают по памяти».", value: "{{ humanize $values.A.Value }}", threshold: "больше 0", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-instance-oom-kills", __dashboardUid__: "samoylove-hardware", __panelId__: "58" }
 
       - uid: hw-memory-pressure
-        title: "Сервер: хост задыхается без памяти"
+        title: 'Сервер: хост задыхается без памяти'
         condition: C
         data:
           - refId: A
             datasourceUid: samoylove-prometheus
-            relativeTimeRange: { from: 900, to: 0 }
+            relativeTimeRange:
+              from: 900
+              to: 0
             model:
-              # ТРЭШ ХОСТА, А НЕ ЛЮБОЕ ОЖИДАНИЕ (27.09.2026). Системный PSI включает
-              # торможение любого контейнера на его собственном memory.high: раннер
-              # CI, упёршийся в свои 3,5 ГиБ, давал хосту десятки процентов при
-              # 16 ГиБ свободной памяти. До 27.09 будило и уплотнение памяти под
-              # крупные страницы (THP defrag=madvise; с тех пор defer — Home Server,
-              # configs/tmpfiles/thp-defrag.conf). Настоящий трэш хоста — 75 % 22.09
-              # и 97 % 26.09; под обычной нагрузкой CI с defer — 1–5 %. Кто ждёт
-              # память в проде — отдельное правило ProdMemoryPressure.
-              #
-              # МИНУС САМОТОРМОЖЕНИЕ РАННЕРА (29.09.2026). Порог 20 % раннер всё
-              # равно перебивал: ci-runner-5 на своём memory.high давал хосту 42–59 %
-              # при 19–22 ГиБ свободных (29.09, 12:12 и 13:42–13:52 МСК), и тревога
-              # горела 33 раза за неделю. Из PSI хоста вычитается PSI full самого
-              # тормозящего раннера CI (incus_cgroup_memory_stall_seconds_total, сбор
-              # по cgroup с 28.09): у одного раннера, упёршегося в свой потолок, почти
-              # весь «full» хоста — его собственный. Прод и рендер не вычитаются.
-              # Настоящая нехватка ловится и без вычета — если свободно меньше 10 %.
-              # Проверено на неделе истории: 22.09 и 26.09 остаются, 29.09 уходят.
-              expr: '(rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) - on() group_left() (max(rate(incus_cgroup_memory_stall_seconds_total{kind="full",name=~"ci-(runner|light).*"}[5m])) or vector(0))) > 0.2 or (rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) > 0.2 and on() (node_memory_MemAvailable_bytes{job="node-host"} / node_memory_MemTotal_bytes{job="node-host"}) < 0.1)'
+              expr: (rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) > 0.2) and on(job,instance) ((node_memory_MemAvailable_bytes{job="node-host"} / node_memory_MemTotal_bytes{job="node-host"})
+                < 0.1)
               instant: true
               refId: A
           - refId: C
@@ -699,17 +701,34 @@ groups:
               type: threshold
               expression: A
               conditions:
-                - evaluator: { type: gt, params: [-1000000000] }
-                  operator: { type: and }
-                  query: { params: [C] }
-                  reducer: { type: last }
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
                   type: query
               refId: C
         noDataState: OK
         execErrState: Error
         for: 10m
-        labels: { severity: warning, area: server }
-        annotations: { summary: "Все задачи хоста стоят в ожидании памяти больше 20% времени", description: "Все задачи хоста больше 20% времени ждут память (PSI full, без самоторможения раннеров CI на их собственном потолке): это трэш, как 22.09 (75%) и 26.09 (97%). Кто ждёт — панель «Давление на память по контейнерам»; прод отдельно тревожит «Сервер: прод ждёт память». Кто съел — панель «Память инстансов» на дашборде железа; частый виновник — cs2-render с открытой игрой.", value: "{{ humanizePercentage $values.A.Value }}", threshold: "больше 20%, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-memory-pressure", __dashboardUid__: "samoylove-hardware", __panelId__: "40" }
+        labels:
+          severity: warning
+          area: server
+        annotations:
+          summary: Все задачи хоста стоят в ожидании памяти больше 20% времени
+          description: 'Хост долго ждёт память и доступно менее 10%. Сравнить MemAvailable, SUnreclaim, ARC и PSI по контейнерам. PSI разных cgroup нельзя вычитать из PSI хоста: временные
+            интервалы пересекаются. Отдельное давление web и баз контролирует правило hw-prod-memory-pressure. Не перезапускать прод вслепую.'
+          value: '{{ humanizePercentage $values.A.Value }}'
+          threshold: PSI full > 20% и доступно < 10%, 10 минут
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-memory-pressure
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '22'
 
       - uid: hw-prod-memory-pressure
         title: "Сервер: прод ждёт память"
@@ -5414,14 +5433,16 @@ groups:
         annotations: { summary: "Планировщик тревог Grafana отстаёт больше чем на 30 секунд", description: "Тревоги вычисляются с опозданием на столько же, насколько отстаёт планировщик.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 30 с, держится 10 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-grafana-scheduler-behind", __dashboardUid__: "samoylove-overview", __panelId__: "50" }
 
       - uid: mon-scrape-near-timeout
-        title: "Мониторинг: сбор цели почти упирается в таймаут"
+        title: 'Мониторинг: сбор цели почти упирается в таймаут'
         condition: C
         data:
           - refId: A
             datasourceUid: samoylove-prometheus
-            relativeTimeRange: { from: 1800, to: 0 }
+            relativeTimeRange:
+              from: 1800
+              to: 0
             model:
-              expr: 'max by (job) (scrape_duration_seconds) > 8'
+              expr: (scrape_duration_seconds / scrape_timeout_seconds > 0.8) and on(job,instance) (up == 1)
               instant: true
               refId: A
           - refId: C
@@ -5430,14 +5451,413 @@ groups:
               type: threshold
               expression: A
               conditions:
-                - evaluator: { type: gt, params: [-1000000000] }
-                  operator: { type: and }
-                  query: { params: [C] }
-                  reducer: { type: last }
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
                   type: query
               refId: C
         noDataState: OK
         execErrState: Error
         for: 15m
-        labels: { severity: warning, area: monitoring }
-        annotations: { summary: "Сбор {{ $labels.job }} идёт дольше 8 секунд из 10", description: "Таймаут опроса 10 с; цель, которая к нему подходит, скоро начнёт выпадать из сбора.", value: "{{ humanizeDuration $values.A.Value }}", threshold: "дольше 8 с, держится 15 мин", runbook_url: "https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-scrape-near-timeout", __dashboardUid__: "samoylove-overview", __panelId__: "53" }
+        labels:
+          severity: warning
+          area: monitoring
+        annotations:
+          summary: Сбор {{ $labels.job }} занимает больше 80% таймаута
+          description: Цель {{ $labels.job }} / {{ $labels.instance }} тратит более 80% собственного таймаута. Проверить нагрузку экспортёра и давление ресурсов. Упавшая цель контролируется
+            отдельной тревогой; увеличение таймаута не устраняет причину.
+          value: '{{ humanizePercentage $values.A.Value }}'
+          threshold: Более 80% таймаута, 15 минут
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-scrape-near-timeout
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '14'
+
+  - orgId: 1
+    name: infra-reliability
+    folder: Alerts
+    interval: 1m
+    rules:
+      - uid: hw-root-space-warning
+        title: 'Сервер: заканчивается запас места на системном диске'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: (node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"} / node_filesystem_size_bytes{job=~"node|node-host",mountpoint="/"} < 0.15) and (node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"}
+                < 40 * 1024^3) and (node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"} / node_filesystem_size_bytes{job=~"node|node-host",mountpoint="/"} >= 0.10)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 30m
+        labels:
+          area: server
+          severity: warning
+        annotations:
+          summary: 'Сервер: заканчивается запас места на системном диске'
+          description: 'Цель {{ $labels.job }}: проверить рост данных и квоту. Удаление версии контента требует сверки активных манифестов; снапшоты могут удерживать удалённые блоки. При
+            менее 10% вместо этого предупреждения действует критический алерт.'
+          threshold: Менее 15% и 40 ГиБ, но не ниже аварийного порога 10%; 30 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-root-space-warning
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '31'
+      - uid: hw-win-system-disk-low
+        title: 'Сервер: на диске C: Windows мало места'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: (windows_logical_disk_free_bytes{job="cs2-win",volume="C:"} / windows_logical_disk_size_bytes{job="cs2-win",volume="C:"} < 0.10) or (windows_logical_disk_free_bytes{job="cs2-win",volume="C:"}
+                < 10 * 1024^3)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels:
+          area: server
+          severity: warning
+        annotations:
+          summary: 'Сервер: на диске C: Windows мало места'
+          description: 'Проверить C:\cs2, Steam и временные результаты. Диск C: отличается от каталога клипов Z:. Не удалять рабочую игру и файлы заданий.'
+          threshold: Свободно менее 10% или 10 ГиБ, 15 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#hw-win-system-disk-low
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '33'
+      - uid: mon-container-memory-high
+        title: 'Мониторинг: контейнер близок к лимиту памяти'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: (monitoring_container_memory_working_set_bytes / monitoring_container_memory_limit_bytes > 0.85) and on(container) (monitoring_container_running == 1)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels:
+          area: monitoring
+          severity: warning
+        annotations:
+          summary: 'Мониторинг: контейнер близок к лимиту памяти'
+          description: Контейнер {{ $labels.container }} использует более 85% лимита. Проверить график working set, запросы, одновременный рендер графиков и OOM. Увеличивать лимит только
+            после проверки запаса памяти хоста.
+          threshold: Working set > 85% лимита, 10 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-memory-high
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '41'
+      - uid: mon-container-oom
+        title: 'Мониторинг: процесс контейнера убит по памяти'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: increase(monitoring_container_oom_kills_total[15m]) > 0
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          area: monitoring
+          severity: critical
+        annotations:
+          summary: 'Мониторинг: процесс контейнера убит по памяти'
+          description: OOM внутри {{ $labels.container }}. Сверить память и журнал ядра. Счётчик сбрасывается при пересоздании контейнера, поэтому общий счётчик ядра остаётся необходимым.
+          threshold: Хотя бы одно новое убийство за 15 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-oom
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '43'
+      - uid: mon-container-stopped
+        title: 'Мониторинг: контейнер стека остановлен'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: monitoring_container_running == 0
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 3m
+        labels:
+          area: monitoring
+          severity: critical
+        annotations:
+          summary: 'Мониторинг: контейнер стека остановлен'
+          description: 'Проверить docker inspect и журнал {{ $labels.container }}. Короткая штатная выкатка укладывается в выдержку. Если сама Grafana остановлена, этот стек не сможет
+            отправить уведомление: нужен внешний наблюдатель.'
+          threshold: Контейнер не работает 3 минуты
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-stopped
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '46'
+      - uid: mon-container-collector-stale
+        title: 'Мониторинг: состояние Docker не обновляется'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: (time() - monitoring_containers_collect_timestamp_seconds > 180) or (monitoring_containers_collect_ok == 0) or (monitoring_container_collect_ok == 0) or (absent(monitoring_containers_collect_timestamp_seconds)
+                and on() (max(up{job="node"}) == 1))
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          area: monitoring
+          severity: warning
+        annotations:
+          summary: 'Мониторинг: состояние Docker не обновляется'
+          description: Проверить monitoring-containers-collect.timer и журнал одноимённой службы в машине со стеком. Ошибка сбора не означает нулевую память контейнера.
+          threshold: Файл старше 3 минут, ошибка чтения или метрики отсутствуют; 5 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-container-collector-stale
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '46'
+      - uid: mon-notification-failed
+        title: 'Мониторинг: не удалось отправить уведомление'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: (increase(grafana_alerting_notifications_failed_total[15m]) > 0) or ((grafana_alerting_notifications_failed_total > 0) unless grafana_alerting_notifications_failed_total
+                offset 15m)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels:
+          area: monitoring
+          severity: warning
+        annotations:
+          summary: 'Мониторинг: не удалось отправить уведомление'
+          description: Сбой отправки через {{ $labels.integration }}. Проверить журнал Grafana, сеть и ответ API. Возможен успешный повтор. Тестовое сообщение не отправлять автоматически.
+            При отказе того же канала этот алерт тоже не гарантирует доставку.
+          threshold: Новая ошибка отправки за 15 минут, включая первое появление счётчика
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-notification-failed
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '44'
+      - uid: mon-textfile-parse-error
+        title: 'Мониторинг: файл метрик не читается'
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: samoylove-prometheus
+            relativeTimeRange:
+              from: 1800
+              to: 0
+            model:
+              expr: node_textfile_scrape_error{job=~"node|node-host"} == 1
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - -1000000000
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+                  type: query
+              refId: C
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels:
+          area: monitoring
+          severity: warning
+        annotations:
+          summary: 'Мониторинг: файл метрик не читается'
+          description: Экспортёр доступен, но отверг хотя бы один файл textfile. Посмотреть его журнал и проверить синтаксис .prom, не заменяя отсутствие метрик нулём.
+          threshold: Ошибка разбора textfile 5 минут
+          value: '{{ $values.A.Value }}'
+          runbook_url: https://github.com/samoy-love/metrics.samoy.love/blob/main/docs/runbook.md#mon-textfile-parse-error
+          __dashboardUid__: samoylove-reliability
+          __panelId__: '46'

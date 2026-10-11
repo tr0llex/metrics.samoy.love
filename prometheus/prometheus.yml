@@ -7,6 +7,7 @@ global:
   scrape_interval: 30s
   scrape_timeout: 10s
   evaluation_interval: 30s
+  extra_scrape_metrics: true
   external_labels:
     server: samoylove-prod
 

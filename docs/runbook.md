@@ -8,10 +8,10 @@
 **для сведения** — не требует действий.
 
 - [CI](#ci-area) — 11
-- [Сервер](#server-area) — 40
+- [Сервер](#server-area) — 42
 - [Пристрелка](#cs2-area) — 66
 - [Сайты и проекты](#sites-area) — 39
-- [Мониторинг](#monitoring-area) — 11
+- [Мониторинг](#monitoring-area) — 17
 
 <a id="ci-area"></a>
 
@@ -261,26 +261,6 @@ zpool_device_errors_total > 0
 
 </details>
 
-<a id="infra-disk-space-low"></a>
-
-### Сервер: в контейнере web кончается диск
-
-**авария** · порог: меньше 10%, держится 15 мин · панель: [Сайты samoy.love — сводка → Свободно на дисках](https://metrics.samoy.love/d/samoylove-overview?viewPanel=23)
-
-**Что случилось.** На корне контейнера web свободно меньше 10%
-
-**Что это значит и что делать.** В web живут nginx, Prometheus, Grafana и статика всех сайтов. Кончится место — перестанут писаться журналы и метрики, выкатка не распакуется. Смотреть, кто вырос: du -xh / в web, чаще всего журналы docker или TSDB.
-
-<details><summary>Условие</summary>
-
-```promql
-node_filesystem_avail_bytes{mountpoint="/",job!="node-containers"} / node_filesystem_size_bytes{mountpoint="/",job!="node-containers"} < 0.10
-```
-
-Держится: 15m · группа `infra-host` · uid `infra-disk-space-low`
-
-</details>
-
 <a id="hw-smart-unhealthy"></a>
 
 ### Сервер: диск сообщает о поломке
@@ -338,6 +318,26 @@ node_hwmon_fan_rpm{sensor="fan2"} == 0
 ```
 
 Держится: 5m · группа `infra-hardware` · uid `hw-cpu-fan-stopped`
+
+</details>
+
+<a id="infra-disk-space-low"></a>
+
+### Сервер: на системном диске мало места
+
+**авария** · порог: меньше 10%, держится 15 мин · панель: [Надёжность — неделя, память, диски, мониторинг → Хост и web: доля свободного места](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=31)
+
+**Что случилось.** Сервер: на системном диске мало места
+
+**Что это значит и что делать.** На корневом диске цели ‹job› осталось менее 10%. Для web действует собственная квота ZFS: свободное место общего пула её не отменяет. Проверить крупные версии контента и снимки перед удалением; не делать blanket prune.
+
+<details><summary>Условие</summary>
+
+```promql
+node_filesystem_avail_bytes{mountpoint="/",job=~"node|node-host"} / node_filesystem_size_bytes{mountpoint="/",job=~"node|node-host"} < 0.10
+```
+
+Держится: 15m · группа `infra-host` · uid `infra-disk-space-low`
 
 </details>
 
@@ -621,6 +621,26 @@ rate(node_pressure_io_stalled_seconds_total{job="node-host"}[5m]) > 0.15
 
 </details>
 
+<a id="hw-root-space-warning"></a>
+
+### Сервер: заканчивается запас места на системном диске
+
+**предупреждение** · порог: Менее 15% и 40 ГиБ, но не ниже аварийного порога 10%; 30 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Хост и web: доля свободного места](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=31)
+
+**Что случилось.** Сервер: заканчивается запас места на системном диске
+
+**Что это значит и что делать.** Цель ‹job›: проверить рост данных и квоту. Удаление версии контента требует сверки активных манифестов; снапшоты могут удерживать удалённые блоки. При менее 10% вместо этого предупреждения действует критический алерт.
+
+<details><summary>Условие</summary>
+
+```promql
+(node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"} / node_filesystem_size_bytes{job=~"node|node-host",mountpoint="/"} < 0.15) and (node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"} < 40 * 1024^3) and (node_filesystem_avail_bytes{job=~"node|node-host",mountpoint="/"} / node_filesystem_size_bytes{job=~"node|node-host",mountpoint="/"} >= 0.10)
+```
+
+Держится: 30m · группа `infra-reliability` · uid `hw-root-space-warning`
+
+</details>
+
 <a id="hw-laptop-backup-old"></a>
 
 ### Сервер: копия на ноутбук старше 36 часов
@@ -718,6 +738,26 @@ increase(smart_nvme_written_bytes_total[1d]) > 1.1e12
 ```
 
 Держится: 1h · группа `infra-hardware` · uid `hw-nvme-write-rate-high`
+
+</details>
+
+<a id="hw-win-system-disk-low"></a>
+
+### Сервер: на диске C: Windows мало места
+
+**предупреждение** · порог: Свободно менее 10% или 10 ГиБ, 15 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Windows: свободно на C:](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=33)
+
+**Что случилось.** Сервер: на диске C: Windows мало места
+
+**Что это значит и что делать.** Проверить C:\cs2, Steam и временные результаты. Диск C: отличается от каталога клипов Z:. Не удалять рабочую игру и файлы заданий.
+
+<details><summary>Условие</summary>
+
+```promql
+(windows_logical_disk_free_bytes{job="cs2-win",volume="C:"} / windows_logical_disk_size_bytes{job="cs2-win",volume="C:"} < 0.10) or (windows_logical_disk_free_bytes{job="cs2-win",volume="C:"} < 10 * 1024^3)
+```
+
+Держится: 15m · группа `infra-reliability` · uid `hw-win-system-disk-low`
 
 </details>
 
@@ -965,16 +1005,16 @@ rate(node_vmstat_pswpin{job="node-host"}[5m]) > 1000 and rate(node_vmstat_pswpou
 
 ### Сервер: хост задыхается без памяти
 
-**предупреждение** · порог: больше 20%, держится 10 мин · панель: [Сервер — хост, диски, контейнеры, машины рендера → Давление на ресурсы (PSI)](https://metrics.samoy.love/d/samoylove-hardware?viewPanel=40)
+**предупреждение** · порог: PSI full > 20% и доступно < 10%, 10 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Давление на память хоста](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=22)
 
 **Что случилось.** Все задачи хоста стоят в ожидании памяти больше 20% времени
 
-**Что это значит и что делать.** Все задачи хоста больше 20% времени ждут память (PSI full, без самоторможения раннеров CI на их собственном потолке): это трэш, как 22.09 (75%) и 26.09 (97%). Кто ждёт — панель «Давление на память по контейнерам»; прод отдельно тревожит «Сервер: прод ждёт память». Кто съел — панель «Память инстансов» на дашборде железа; частый виновник — cs2-render с открытой игрой.
+**Что это значит и что делать.** Хост долго ждёт память и доступно менее 10%. Сравнить MemAvailable, SUnreclaim, ARC и PSI по контейнерам. PSI разных cgroup нельзя вычитать из PSI хоста: временные интервалы пересекаются. Отдельное давление web и баз контролирует правило hw-prod-memory-pressure. Не перезапускать прод вслепую.
 
 <details><summary>Условие</summary>
 
 ```promql
-(rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) - on() group_left() (max(rate(incus_cgroup_memory_stall_seconds_total{kind="full",name=~"ci-(runner|light).*"}[5m])) or vector(0))) > 0.2 or (rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) > 0.2 and on() (node_memory_MemAvailable_bytes{job="node-host"} / node_memory_MemTotal_bytes{job="node-host"}) < 0.1)
+(rate(node_pressure_memory_stalled_seconds_total{job="node-host"}[5m]) > 0.2) and on(job,instance) ((node_memory_MemAvailable_bytes{job="node-host"} / node_memory_MemTotal_bytes{job="node-host"}) < 0.1)
 ```
 
 Держится: 10m · группа `infra-hardware` · uid `hw-memory-pressure`
@@ -3141,6 +3181,46 @@ sum(rate(prometheus_tsdb_head_samples_appended_total[5m])) == 0
 
 </details>
 
+<a id="mon-container-stopped"></a>
+
+### Мониторинг: контейнер стека остановлен
+
+**авария** · порог: Контейнер не работает 3 минуты · панель: [Надёжность — неделя, память, диски, мониторинг → Сборщики Docker: состояние](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=46)
+
+**Что случилось.** Мониторинг: контейнер стека остановлен
+
+**Что это значит и что делать.** Проверить docker inspect и журнал ‹container›. Короткая штатная выкатка укладывается в выдержку. Если сама Grafana остановлена, этот стек не сможет отправить уведомление: нужен внешний наблюдатель.
+
+<details><summary>Условие</summary>
+
+```promql
+monitoring_container_running == 0
+```
+
+Держится: 3m · группа `infra-reliability` · uid `mon-container-stopped`
+
+</details>
+
+<a id="mon-container-oom"></a>
+
+### Мониторинг: процесс контейнера убит по памяти
+
+**авария** · порог: Хотя бы одно новое убийство за 15 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Docker: убийства и перезапуски](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=43)
+
+**Что случилось.** Мониторинг: процесс контейнера убит по памяти
+
+**Что это значит и что делать.** OOM внутри ‹container›. Сверить память и журнал ядра. Счётчик сбрасывается при пересоздании контейнера, поэтому общий счётчик ядра остаётся необходимым.
+
+<details><summary>Условие</summary>
+
+```promql
+increase(monitoring_container_oom_kills_total[15m]) > 0
+```
+
+Держится: 0s · группа `infra-reliability` · uid `mon-container-oom`
+
+</details>
+
 <a id="mon-grafana-scheduler-behind"></a>
 
 ### Мониторинг: Grafana не успевает вычислять тревоги
@@ -3181,6 +3261,46 @@ prometheus_config_last_reload_successful == 0
 
 </details>
 
+<a id="mon-container-memory-high"></a>
+
+### Мониторинг: контейнер близок к лимиту памяти
+
+**предупреждение** · порог: Working set > 85% лимита, 10 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Docker: память от лимита](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=41)
+
+**Что случилось.** Мониторинг: контейнер близок к лимиту памяти
+
+**Что это значит и что делать.** Контейнер ‹container› использует более 85% лимита. Проверить график working set, запросы, одновременный рендер графиков и OOM. Увеличивать лимит только после проверки запаса памяти хоста.
+
+<details><summary>Условие</summary>
+
+```promql
+(monitoring_container_memory_working_set_bytes / monitoring_container_memory_limit_bytes > 0.85) and on(container) (monitoring_container_running == 1)
+```
+
+Держится: 10m · группа `infra-reliability` · uid `mon-container-memory-high`
+
+</details>
+
+<a id="mon-notification-failed"></a>
+
+### Мониторинг: не удалось отправить уведомление
+
+**предупреждение** · порог: Новая ошибка отправки за 15 минут, включая первое появление счётчика · панель: [Надёжность — неделя, память, диски, мониторинг → Ошибки доставки уведомлений](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=44)
+
+**Что случилось.** Мониторинг: не удалось отправить уведомление
+
+**Что это значит и что делать.** Сбой отправки через ‹integration›. Проверить журнал Grafana, сеть и ответ API. Возможен успешный повтор. Тестовое сообщение не отправлять автоматически. При отказе того же канала этот алерт тоже не гарантирует доставку.
+
+<details><summary>Условие</summary>
+
+```promql
+(increase(grafana_alerting_notifications_failed_total[15m]) > 0) or ((grafana_alerting_notifications_failed_total > 0) unless grafana_alerting_notifications_failed_total offset 15m)
+```
+
+Держится: 0s · группа `infra-reliability` · uid `mon-notification-failed`
+
+</details>
+
 <a id="mon-grafana-rule-eval-failing"></a>
 
 ### Мониторинг: правила тревог не вычисляются
@@ -3205,19 +3325,39 @@ sum(increase(grafana_alerting_rule_evaluation_failures_total[30m])) > 0
 
 ### Мониторинг: сбор цели почти упирается в таймаут
 
-**предупреждение** · порог: дольше 8 с, держится 15 мин · панель: [Сайты samoy.love — сводка → Время опроса целей](https://metrics.samoy.love/d/samoylove-overview?viewPanel=53)
+**предупреждение** · порог: Более 80% таймаута, 15 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Длительность опроса / таймаут](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=14)
 
-**Что случилось.** Сбор ‹job› идёт дольше 8 секунд из 10
+**Что случилось.** Сбор ‹job› занимает больше 80% таймаута
 
-**Что это значит и что делать.** Таймаут опроса 10 с; цель, которая к нему подходит, скоро начнёт выпадать из сбора.
+**Что это значит и что делать.** Цель ‹job› / ‹instance› тратит более 80% собственного таймаута. Проверить нагрузку экспортёра и давление ресурсов. Упавшая цель контролируется отдельной тревогой; увеличение таймаута не устраняет причину.
 
 <details><summary>Условие</summary>
 
 ```promql
-max by (job) (scrape_duration_seconds) > 8
+(scrape_duration_seconds / scrape_timeout_seconds > 0.8) and on(job,instance) (up == 1)
 ```
 
 Держится: 15m · группа `infra-monitoring` · uid `mon-scrape-near-timeout`
+
+</details>
+
+<a id="mon-container-collector-stale"></a>
+
+### Мониторинг: состояние Docker не обновляется
+
+**предупреждение** · порог: Файл старше 3 минут, ошибка чтения или метрики отсутствуют; 5 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Сборщики Docker: состояние](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=46)
+
+**Что случилось.** Мониторинг: состояние Docker не обновляется
+
+**Что это значит и что делать.** Проверить monitoring-containers-collect.timer и журнал одноимённой службы в машине со стеком. Ошибка сбора не означает нулевую память контейнера.
+
+<details><summary>Условие</summary>
+
+```promql
+(time() - monitoring_containers_collect_timestamp_seconds > 180) or (monitoring_containers_collect_ok == 0) or (monitoring_container_collect_ok == 0) or (absent(monitoring_containers_collect_timestamp_seconds) and on() (max(up{job="node"}) == 1))
+```
+
+Держится: 5m · группа `infra-reliability` · uid `mon-container-collector-stale`
 
 </details>
 
@@ -3238,6 +3378,26 @@ time() - node_textfile_mtime_seconds{job="node-host",file!~".*/backup_laptop.pro
 ```
 
 Держится: 5m · группа `infra-monitoring` · uid `mon-host-textfile-stale`
+
+</details>
+
+<a id="mon-textfile-parse-error"></a>
+
+### Мониторинг: файл метрик не читается
+
+**предупреждение** · порог: Ошибка разбора textfile 5 минут · панель: [Надёжность — неделя, память, диски, мониторинг → Сборщики Docker: состояние](https://metrics.samoy.love/d/samoylove-reliability?viewPanel=46)
+
+**Что случилось.** Мониторинг: файл метрик не читается
+
+**Что это значит и что делать.** Экспортёр доступен, но отверг хотя бы один файл textfile. Посмотреть его журнал и проверить синтаксис .prom, не заменяя отсутствие метрик нулём.
+
+<details><summary>Условие</summary>
+
+```promql
+node_textfile_scrape_error{job=~"node|node-host"} == 1
+```
+
+Держится: 5m · группа `infra-reliability` · uid `mon-textfile-parse-error`
 
 </details>
 

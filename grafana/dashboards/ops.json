@@ -17,6 +17,14 @@
   },
   "links": [
     {
+      "title": "Надёжность · неделя",
+      "type": "link",
+      "url": "/d/samoylove-reliability",
+      "targetBlank": false,
+      "keepTime": false,
+      "includeVars": false
+    },
+    {
       "title": "CI",
       "type": "link",
       "url": "/d/samoylove-ci",
@@ -73,7 +81,7 @@
   "templating": {
     "list": []
   },
-  "version": 2,
+  "version": 3,
   "panels": [
     {
       "type": "row",
@@ -892,7 +900,7 @@
     {
       "type": "stat",
       "title": "Убито по памяти за сутки",
-      "description": "Процессов, убитых OOM-killer в контейнерах и на хосте за сутки.",
+      "description": "Все убийства процессов ядром за сутки, включая лимиты контейнеров. Один счётчик ядра без сложения с Incus: одна жертва учитывается один раз. increase даёт оценку по собранным точкам; подробности — на дашборде «Надёжность». Нет данных означает неизвестное состояние.",
       "id": 23,
       "datasource": {
         "type": "prometheus",
@@ -901,7 +909,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(incus_memory_OOM_kills_total[1d])) + (sum(increase(host_global_oom_kills_total{job=\"node-host\"}[1d])) or vector(0))",
+          "expr": "sum(increase(node_vmstat_oom_kill{job=\"node-host\"}[1d]))",
           "instant": true
         }
       ],

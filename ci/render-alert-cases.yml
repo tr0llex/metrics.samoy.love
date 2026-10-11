@@ -339,3 +339,211 @@ tests:
         exp_alerts:
           - exp_labels: {engine: hlae, requester: user, severity: warning, area: cs2}
           - exp_labels: {engine: linux, requester: system, severity: warning, area: cs2}
+
+  - name: Isolated cgroup pressure with plenty of host memory does not alert
+    interval: 1m
+    input_series:
+      - series: node_pressure_memory_stalled_seconds_total{job="node-host",instance="host"}
+        values: 0+30x40
+      - series: node_memory_MemTotal_bytes{job="node-host",instance="host"}
+        values: 1000+0x40
+      - series: incus_cgroup_memory_stall_seconds_total{name="ci-light",kind="full"}
+        values: 0+30x40
+      - series: node_memory_MemAvailable_bytes{job="node-host",instance="host"}
+        values: 500+0x40
+    promql_expr_test:
+      - rule_uid: hw-memory-pressure
+        eval_time: 30m
+        exp_samples: []
+  - name: A busy runner must not hide real host memory exhaustion
+    interval: 1m
+    input_series:
+      - series: node_pressure_memory_stalled_seconds_total{job="node-host",instance="host"}
+        values: 0+30x40
+      - series: node_memory_MemTotal_bytes{job="node-host",instance="host"}
+        values: 1000+0x40
+      - series: incus_cgroup_memory_stall_seconds_total{name="ci-light",kind="full"}
+        values: 0+30x40
+      - series: node_memory_MemAvailable_bytes{job="node-host",instance="host"}
+        values: 50+0x40
+    promql_expr_test:
+      - rule_uid: hw-memory-pressure
+        eval_time: 30m
+        exp_samples:
+          - labels: '{job="node-host",instance="host"}'
+            value: 0.5
+  - name: Disk warning precedes the existing critical threshold
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web",mountpoint="/"}
+        values: 12000000000+0x40
+      - series: node_filesystem_size_bytes{job="node",instance="web",mountpoint="/"}
+        values: 100000000000+0x40
+    promql_expr_test:
+      - rule_uid: hw-root-space-warning
+        eval_time: 30m
+        exp_samples:
+          - labels: '{job="node",instance="web",mountpoint="/"}'
+            value: 0.12
+  - name: Critical disk threshold suppresses duplicate warning
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web",mountpoint="/"}
+        values: 9000000000+0x40
+      - series: node_filesystem_size_bytes{job="node",instance="web",mountpoint="/"}
+        values: 100000000000+0x40
+    promql_expr_test:
+      - rule_uid: hw-root-space-warning
+        eval_time: 30m
+        exp_samples: []
+  - name: Absolute space threshold avoids warning on large healthy disks
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="web",mountpoint="/"}
+        values: 120000000000+0x40
+      - series: node_filesystem_size_bytes{job="node",instance="web",mountpoint="/"}
+        values: 1000000000000+0x40
+    promql_expr_test:
+      - rule_uid: hw-root-space-warning
+        eval_time: 30m
+        exp_samples: []
+  - name: Windows system disk is checked separately from clips
+    interval: 1m
+    input_series:
+      - series: windows_logical_disk_free_bytes{job="cs2-win",volume="C:"}
+        values: 10000000000+0x40
+      - series: windows_logical_disk_size_bytes{job="cs2-win",volume="C:"}
+        values: 150000000000+0x40
+    promql_expr_test:
+      - rule_uid: hw-win-system-disk-low
+        eval_time: 30m
+        exp_samples:
+          - labels: '{job="cs2-win",volume="C:"}'
+            value: 0.06666666666666667
+  - name: High working set warns before container OOM
+    interval: 1m
+    input_series:
+      - series: monitoring_container_memory_working_set_bytes{container="grafana"}
+        values: 900+0x40
+      - series: monitoring_container_memory_limit_bytes{container="grafana"}
+        values: 1000+0x40
+      - series: monitoring_container_running{container="grafana"}
+        values: 1+0x40
+    promql_expr_test:
+      - rule_uid: mon-container-memory-high
+        eval_time: 30m
+        exp_samples:
+          - labels: '{container="grafana"}'
+            value: 0.9
+  - name: Stopped container is visible but not zero memory
+    interval: 1m
+    input_series:
+      - series: monitoring_container_running{container="grafana"}
+        values: 0+0x40
+    promql_expr_test:
+      - rule_uid: mon-container-stopped
+        eval_time: 30m
+        exp_samples:
+          - labels: monitoring_container_running{container="grafana"}
+            value: 0
+      - rule_uid: mon-container-memory-high
+        eval_time: 30m
+        exp_samples: []
+  - name: New container OOM is an incident
+    interval: 1m
+    input_series:
+      - series: monitoring_container_oom_kills_total{container="grafana"}
+        values: 0+0x20 1+0x20
+    promql_expr_test:
+      - rule_uid: mon-container-oom
+        eval_time: 30m
+        exp_samples:
+          - labels: '{container="grafana"}'
+            value: 1
+  - name: Missing Docker collector is not silently healthy
+    interval: 1m
+    input_series:
+      - series: up{job="node"}
+        values: 1+0x40
+    promql_expr_test:
+      - rule_uid: mon-container-collector-stale
+        eval_time: 30m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+  - name: Stale Docker collector timestamp is detected
+    interval: 1m
+    input_series:
+      - series: monitoring_containers_collect_timestamp_seconds
+        values: 1+0x40
+    promql_expr_test:
+      - rule_uid: mon-container-collector-stale
+        eval_time: 30m
+        exp_samples:
+          - labels: '{}'
+            value: 1799
+  - name: Malformed textfile is detected even when exporter responds
+    interval: 1m
+    input_series:
+      - series: node_textfile_scrape_error{job="node"}
+        values: 1+0x40
+    promql_expr_test:
+      - rule_uid: mon-textfile-parse-error
+        eval_time: 30m
+        exp_samples:
+          - labels: node_textfile_scrape_error{job="node"}
+            value: 1
+  - name: Lazy failed notification counter alerts on its first sample
+    interval: 1m
+    input_series:
+      - series: grafana_alerting_notifications_failed_total{integration="telegram"}
+        values: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 1+0x20
+    promql_expr_test:
+      - rule_uid: mon-notification-failed
+        eval_time: 30m
+        exp_samples:
+          - labels: grafana_alerting_notifications_failed_total{integration="telegram"}
+            value: 1
+  - name: Failed notification counter reset does not create an error
+    interval: 1m
+    input_series:
+      - series: grafana_alerting_notifications_failed_total{integration="telegram"}
+        values: 3+0x20 0+0x20
+    promql_expr_test:
+      - rule_uid: mon-notification-failed
+        eval_time: 30m
+        exp_samples: []
+  - name: Scrape warning uses each target timeout
+    interval: 1m
+    input_series:
+      - series: scrape_duration_seconds{job="fast"}
+        values: 1.8+0x40
+      - series: scrape_timeout_seconds{job="fast"}
+        values: 2+0x40
+      - series: up{job="fast"}
+        values: 1+0x40
+      - series: scrape_duration_seconds{job="slow"}
+        values: 9+0x40
+      - series: scrape_timeout_seconds{job="slow"}
+        values: 20+0x40
+      - series: up{job="slow"}
+        values: 1+0x40
+    promql_expr_test:
+      - rule_uid: mon-scrape-near-timeout
+        eval_time: 30m
+        exp_samples:
+          - labels: '{job="fast"}'
+            value: 0.9
+  - name: Failed scrape is handled by availability rule
+    interval: 1m
+    input_series:
+      - series: scrape_duration_seconds{job="fast"}
+        values: 2+0x40
+      - series: scrape_timeout_seconds{job="fast"}
+        values: 2+0x40
+      - series: up{job="fast"}
+        values: 0+0x40
+    promql_expr_test:
+      - rule_uid: mon-scrape-near-timeout
+        eval_time: 30m
+        exp_samples: []

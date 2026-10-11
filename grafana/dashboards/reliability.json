@@ -1,0 +1,2024 @@
+{
+  "uid": "samoylove-reliability",
+  "title": "Надёжность — неделя, память, диски, мониторинг",
+  "description": "Разбор недельной истории и текущего запаса ресурсов. Пропуски сбора отделены от успешных измерений.",
+  "tags": [
+    "samoy.love",
+    "сервер",
+    "мониторинг"
+  ],
+  "timezone": "browser",
+  "editable": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "Обзор",
+      "type": "link",
+      "url": "/d/samoylove-ops",
+      "icon": "dashboard",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": false,
+      "tooltip": ""
+    },
+    {
+      "title": "CI",
+      "type": "link",
+      "url": "/d/samoylove-ci",
+      "icon": "dashboard",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": false,
+      "tooltip": ""
+    },
+    {
+      "title": "Пристрелка",
+      "type": "link",
+      "url": "/d/samoylove-cs2",
+      "icon": "dashboard",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": false,
+      "tooltip": ""
+    },
+    {
+      "title": "Сайты",
+      "type": "link",
+      "url": "/d/samoylove-overview",
+      "icon": "dashboard",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": false,
+      "tooltip": ""
+    },
+    {
+      "title": "Тревоги",
+      "type": "link",
+      "url": "/alerting/list?view=list&search=state:firing",
+      "icon": "bolt",
+      "targetBlank": false,
+      "keepTime": false,
+      "includeVars": false,
+      "tooltip": "Что горит сейчас"
+    }
+  ],
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Сейчас: доступность измерений и запас ресурсов",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 2,
+      "title": "Цели отвечают",
+      "description": "Успешно опрошенные цели сейчас. Сравнивать с общим количеством рядом.",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(up)",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Целей в конфигурации",
+      "description": "Текущее количество целей; это не число, навечно прибитое к дашборду.",
+      "type": "stat",
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "count(up)",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Свободно в web",
+      "description": "Доступное место с учётом квоты ZFS. Даже свободный общий пул не отменяет лимит web.",
+      "type": "stat",
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_filesystem_avail_bytes{job=\"node\",mountpoint=\"/\"}",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10737418240
+              },
+              {
+                "color": "green",
+                "value": 42949672960
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "Доступная память хоста",
+      "description": "MemAvailable учитывает память, которую ядро может освободить. Сопоставлять с PSI ниже.",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemAvailable_bytes{job=\"node-host\"}",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "Внешняя копия: возраст",
+      "description": "Снимки ZFS и дамп на сервере не заменяют внешнюю копию. Нет отметки — неизвестно, а не ноль часов.",
+      "type": "stat",
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - max(backup_laptop_last_success_timestamp_seconds > 0)",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 129600
+              },
+              {
+                "color": "red",
+                "value": 604800
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "Контейнеры: сбор свежий",
+      "description": "Возраст нового сборщика лимитов Docker. При остановке таймера это число растёт.",
+      "type": "stat",
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - monitoring_containers_collect_timestamp_seconds",
+          "legendFormat": "",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 180
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "title": "История выбранного периода: пропуски не означают успех",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 11,
+      "title": "Успешные опросы среди полученных",
+      "description": "Доля up=1 среди реально полученных точек. Простой Prometheus сюда не входит; смотреть покрытие рядом. Это качество сбора, не внешний uptime сайтов.",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg_over_time(up[$__range])",
+          "legendFormat": "{{job}} · {{instance}}",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          },
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Доля",
+            "desc": false
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.95
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Доля"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "job": "Задача",
+              "instance": "Цель",
+              "Value": "Доля"
+            },
+            "indexByName": {
+              "job": 0,
+              "instance": 1,
+              "Value": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Покрытие сбором: 30 секунд",
+      "description": "Число точек up / ожидаемые точки за выбранный период при интервале 30 с. Пропуски Prometheus и недавно добавленные цели снижают покрытие. При изменении интервала нужно обновить формулу. Цель, у которой не было ни одной точки, не появляется.",
+      "type": "table",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "clamp_max(count_over_time(up[$__range]) / ($__range_s / 30), 1)",
+          "legendFormat": "{{job}} · {{instance}}",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          },
+          "format": "table"
+        }
+      ],
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Доля",
+            "desc": false
+          }
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.95
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Доля"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "renameByName": {
+              "job": "Задача",
+              "instance": "Цель",
+              "Value": "Доля"
+            },
+            "indexByName": {
+              "job": 0,
+              "instance": 1,
+              "Value": 2
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Состояние целей во времени",
+      "description": "1 — опрос успешен, 0 — опрос завершился ошибкой, разрыв — точки нет. Разрывы не соединяются.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up",
+          "legendFormat": "{{job}} · {{instance}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "title": "Длительность опроса / таймаут",
+      "description": "Доля фактического таймаута каждой цели; 0,8 означает, что израсходовано 80% времени. Недоступно до включения extra_scrape_metrics.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "scrape_duration_seconds / scrape_timeout_seconds",
+          "legendFormat": "{{job}} · {{instance}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "title": "Память: общая нехватка и лимиты отдельных контейнеров",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 21,
+      "title": "Убийства процессов за период",
+      "description": "Общий итог берётся только из node_vmstat_oom_kill. Global OOM — часть итога, не добавка. increase приблизителен при пропусках сбора.",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(node_vmstat_oom_kill{job=\"node-host\"}[$__range]))",
+          "legendFormat": "всего",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(host_global_oom_kills_total{job=\"node-host\"}[$__range]))",
+          "legendFormat": "из них: память хоста",
+          "instant": true,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 22,
+      "title": "Давление на память хоста",
+      "description": "Доля времени, когда все исполняемые задачи ждали память. Высокий PSI может отражать ограниченный cgroup; общий дефицит подтверждается MemAvailable и давлением прода.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 16,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(node_pressure_memory_stalled_seconds_total{job=\"node-host\"}[5m])",
+          "legendFormat": "host full",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(node_pressure_memory_waiting_seconds_total{job=\"node-host\"}[5m])",
+          "legendFormat": "host some",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 23,
+      "title": "Память хоста и неосвобождаемый slab",
+      "description": "SUnreclaim помогает заметить рост памяти ядра. ARC может освобождаться; сам по себе его размер не авария.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_memory_MemAvailable_bytes{job=\"node-host\"}",
+          "legendFormat": "доступно",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "node_memory_SUnreclaim_bytes{job=\"node-host\"}",
+          "legendFormat": "slab не освобождается",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "node_zfs_arc_size{job=\"node-host\"}",
+          "legendFormat": "ZFS ARC",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 24,
+      "title": "PSI full по контейнерам",
+      "description": "Позволяет отличить ограничение раннера или рендера от давления на web и базы. Ноль показывается; остановленный контейнер пропадает.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(incus_cgroup_memory_stall_seconds_total{kind=\"full\"}[5m])",
+          "legendFormat": "{{name}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 30,
+      "title": "Диски: доступное место и квоты",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 31,
+      "title": "Хост и web: доля свободного места",
+      "description": "Постоянные корневые файловые системы. Предупреждение: менее 15% и менее 40 ГиБ; авария — менее 10%.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_filesystem_avail_bytes{job=~\"node|node-host\",mountpoint=\"/\"} / node_filesystem_size_bytes{job=~\"node|node-host\",mountpoint=\"/\"}",
+          "legendFormat": "{{job}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 32,
+      "title": "Свободно на постоянных файловых системах",
+      "description": "Только ext4, XFS, Btrfs и ZFS хоста: без tmpfs и псевдодисков. Датасеты общего пула могут показывать одинаковое доступное место; значения не складывать.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 36,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_filesystem_avail_bytes{job=\"node-host\",fstype=~\"ext4|xfs|btrfs|zfs\"}",
+          "legendFormat": "{{device}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 33,
+      "title": "Windows: свободно на C:",
+      "description": "Системный диск Windows отдельно от общего каталога клипов.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 8,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "windows_logical_disk_free_bytes{job=\"cs2-win\",volume=\"C:\"}",
+          "legendFormat": "C:",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 34,
+      "title": "Снимки ZFS: возраст",
+      "description": "Снимки на том же пуле защищают от ошибочного изменения, но не от потери сервера.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 8,
+        "y": 44,
+        "w": 8,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - zfs_snapshot_newest_timestamp_seconds{job=\"node-host\"}",
+          "legendFormat": "{{dataset}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 35,
+      "title": "Дамп Postgres: возраст",
+      "description": "Свежесть серверного дампа. Внешняя копия контролируется отдельно.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 16,
+        "y": 44,
+        "w": 8,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "cs2_pg_dump_age_seconds",
+          "legendFormat": "дамп",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 40,
+      "title": "Мониторинг: лимиты, перезапуски и доставка",
+      "type": "row",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 41,
+      "title": "Docker: память от лимита",
+      "description": "Working set = memory.current − inactive_file, как оценка активно используемой памяти. Предупреждение от 85% 10 минут; абсолютный лимит может быть достигнут и из-за неосвобождаемого cache.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "monitoring_container_memory_working_set_bytes / monitoring_container_memory_limit_bytes",
+          "legendFormat": "{{container}}",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 42,
+      "title": "Docker: память и лимиты",
+      "description": "Заряженная в cgroup память, working set и лимит. Данные собираются раз в минуту без постоянно работающего агента.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 51,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "monitoring_container_memory_usage_bytes",
+          "legendFormat": "{{container}} · всего",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "monitoring_container_memory_working_set_bytes",
+          "legendFormat": "{{container}} · working set",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "monitoring_container_memory_limit_bytes",
+          "legendFormat": "{{container}} · лимит",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 43,
+      "title": "Docker: убийства и перезапуски",
+      "description": "Счётчики существуют в пределах текущего контейнера/cgroup и сбрасываются при пересоздании. Для полного итога OOM хоста использовать ядро выше.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 59,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "increase(monitoring_container_oom_kills_total[1h])",
+          "legendFormat": "{{container}} · OOM",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "increase(monitoring_container_restarts_total[1h])",
+          "legendFormat": "{{container}} · restart",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 44,
+      "title": "Ошибки доставки уведомлений",
+      "description": "Ошибки попыток отправки за час; повторная попытка может пройти. Отсутствующий лениво создаваемый счётчик заменён нулём только пока Grafana успешно опрашивается. Этот график не подтверждает прочтение сообщений.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 59,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(grafana_alerting_notifications_failed_total[1h])) or (0 * max(up{job=\"grafana\"} == 1))",
+          "legendFormat": "сбои отправки",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(grafana_alerting_notifications_total[1h]))",
+          "legendFormat": "попытки отправки",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 45,
+      "title": "Вычисление правил и история",
+      "description": "Ошибки попыток вычисления и записи истории помогают объяснить потерянные переходы алертов. Успешный retry возможен.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 67,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(grafana_alerting_rule_evaluation_attempt_failures_total[1h])) or (0 * max(up{job=\"grafana\"} == 1))",
+          "legendFormat": "ошибки попыток вычисления",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(increase(grafana_alerting_state_history_writes_failed_total[1h])) or (0 * max(up{job=\"grafana\"} == 1))",
+          "legendFormat": "ошибки записи истории",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 46,
+      "title": "Сборщики Docker: состояние",
+      "description": "1 — данные доступны. Остановленный контейнер имеет running=0; ошибка чтения не превращается в нулевую память.",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 67,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "samoylove-prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "monitoring_container_running",
+          "legendFormat": "{{container}} · running",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "monitoring_container_collect_ok",
+          "legendFormat": "{{container}} · collect",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        },
+        {
+          "refId": "C",
+          "expr": "monitoring_containers_collect_ok",
+          "legendFormat": "docker API",
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "samoylove-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 1,
+          "noValue": "Нет данных",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "spanNulls": false,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      }
+    }
+  ]
+}
